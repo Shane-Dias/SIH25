@@ -10,8 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 const API_BASE_URL = process.env.API_BASE_URL || 'http://192.168.1.37:8000';
 
 type IncidentType =
-  | 'Domestic Violence' | 'Child Abuse' | 'Sexual Harassment' | 'Stalking' | 'Human Trafficking'
-  | 'Fire' | 'Theft' | 'Accident' | 'Missing Persons' | 'Medical Emergency' | 'Other';
+  | 'Pothole/Road Damage' | 'water pipe burst' | 'Overflowing Trash Can' | 'Illegal Dumping';
 
 interface LocationType {
   latitude: string;
@@ -39,8 +38,7 @@ interface ErrorType {
 }
 
 const INCIDENT_TYPES: IncidentType[] = [
-  'Domestic Violence', 'Child Abuse', 'Sexual Harassment', 'Stalking', 'Human Trafficking',
-  'Fire', 'Theft', 'Accident', 'Missing Persons', 'Medical Emergency', 'Other'
+  'Pothole/Road Damage' ,'water pipe burst' ,'Overflowing Trash Can' , 'Illegal Dumping'
 ];
 
 export default function ReportScreen() {
