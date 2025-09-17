@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import OurFeatures from "../components/OurFeatures";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import Chartglobal from "./Chart-global";
+import LanguageToggle from "@/components/ui/LanguageToggle";
+
 
 const Testimonials = lazy(() => import("@/components/Testimonials"));
 const FAQSection = lazy(() => import("@/components/FAQ"));
@@ -82,6 +84,7 @@ const Home = () => {
 
   return (
     <div className="bg-slate-900 min-h-screen">
+      <LanguageToggle />
       <div className="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
         {/* Content sections */}
         <div className="relative z-10">
