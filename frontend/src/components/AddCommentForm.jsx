@@ -8,6 +8,7 @@ const AddCommentForm = ({ incidentId, onAddComment }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isloggedin } = useAuth();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +33,7 @@ const AddCommentForm = ({ incidentId, onAddComment }) => {
       }
 
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/incidents/${incidentId}/comments/`,
+        `${API_URL}/api/incidents/${incidentId}/comments/`,
         {
           comment: commentText,
         },
