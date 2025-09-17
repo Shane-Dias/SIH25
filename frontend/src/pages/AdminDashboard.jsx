@@ -126,7 +126,7 @@ const AdminDashboard = () => {
   const fetchFlaggedIncidents = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/all_station_incidents/",
+        `${API_URL}/api/all_station_incidents/`,
         {
           method: "GET",
           headers: {
@@ -154,7 +154,7 @@ const AdminDashboard = () => {
   const handleNewTask = async (id) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/update_incident/${id}/`,
+        `${API_URL}/api/update_incident/${id}/`,
         {
           method: "PATCH",
           headers: {
@@ -177,7 +177,7 @@ const AdminDashboard = () => {
   const handleMarkAsCompleted = async (id) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/update_incident/${id}/`,
+        `${API_URL}/api/update_incident/${id}/`,
         {
           method: "PATCH",
           headers: {
@@ -208,7 +208,7 @@ const AdminDashboard = () => {
   const handleFalseReport = async (id) => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/all_station_incidents/",
+        `${API_URL}/api/all_station_incidents/`,
         {
           method: "POST",
           headers: {
