@@ -100,6 +100,8 @@ const HeatMapLayer = ({ data }) => {
 const HeatMap = () => {
   const [heatmapData, setHeatmapData] = useState([]);
   const [policeStations, setPoliceStations] = useState([]);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Get coordinates from localStorage or use default
   const getCoordinates = () => {
@@ -122,7 +124,7 @@ const HeatMap = () => {
     const fetchIncidents = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/all_incidents/"
+          `${API_URL}/api/all_incidents/`
         );
         const incidents = await response.json();
         console.log("Fetched incidents:", incidents);

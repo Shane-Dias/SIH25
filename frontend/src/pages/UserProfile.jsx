@@ -5,11 +5,13 @@ const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/user/${userId}/`);
+        const response = await fetch(`${API_URL}/api/user/${userId}/`);
         if (response.ok) {
           const data = await response.json();
           setUser(data);

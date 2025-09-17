@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Incidents, PoliceStations, FireStations, DisasterReliefStations, User, Comment, Admin, Hospital, NGO
+from .models import Incidents, PoliceStations, FireStations, DisasterReliefStations, User, Comment, Admin, Hospital, MunicipalCorporation
 
 # Register your models here.
 admin.site.register(User)
@@ -10,7 +10,7 @@ admin.site.register(FireStations)
 admin.site.register(DisasterReliefStations)
 admin.site.register(Admin)
 admin.site.register(Hospital)
-admin.site.register(NGO)
+admin.site.register(MunicipalCorporation)
 @admin.register(Comment)
 
 class CommentAdmin(admin.ModelAdmin):

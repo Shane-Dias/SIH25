@@ -99,14 +99,14 @@ class Hospital(models.Model):
     def __str__(self):
         return f"Hospital: {self.id}"
     
-class NGO(models.Model):
+class MunicipalCorporation(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     number = models.IntegerField()
     email = models.CharField(max_length=200)
 
     def __str__(self):
-        return f"NGO Station: {self.id}"
+        return f"MunicipalCorporation: {self.id}"
 
 import logging
 
@@ -114,6 +114,10 @@ logger = logging.getLogger(__name__)
 
 class Incidents(models.Model):
     INCIDENT_TYPES = [
+        ('Pothole/Road Damage', 'Pothole/Road Damage'),
+        ('Water Pipe Burst', 'Water Pipe Burst'),
+        ('Overflowing Trash Bins', 'Overflowing Trash Bins'),
+        ('Illegal Dumping', 'Illegal Dumping'),
         ('Domestic Violence', 'Domestic Violence'),
         ('Child Abuse', 'Child Abuse'),
         ('Sexual Harassment', 'Sexual Harassment'),
@@ -148,6 +152,7 @@ class Incidents(models.Model):
     file = models.FileField(upload_to='incident_files/', blank=True, null=True)
     reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='incidents', null=True, blank=True)
     reported_at = models.DateTimeField(default=timezone.now)
+    municipal_corporation = models.ForeignKey('MunicipalCorporation', on_delete=models.DO_NOTHING, null=True, blank=True)
     police_station = models.ForeignKey('PoliceStations', on_delete=models.DO_NOTHING, null=True, blank=True)
     fire_station = models.ForeignKey('FireStations', on_delete=models.DO_NOTHING, null=True, blank=True)
     hospital_station = models.ForeignKey('Hospital', on_delete=models.DO_NOTHING, null=True, blank=True)
@@ -234,8 +239,8 @@ class Admin(models.Model):
     hospital = models.OneToOneField(
         Hospital, on_delete=models.SET_NULL, null=True, blank=True, related_name="admin"
     )
-    NGO_station = models.OneToOneField(
-        NGO, on_delete=models.SET_NULL, null=True, blank=True, related_name="admin"
+    municipal_corporation = models.OneToOneField(
+        MunicipalCorporation, on_delete=models.SET_NULL, null=True, blank=True, related_name="admin"
     )
 
     def save(self, *args, **kwargs):

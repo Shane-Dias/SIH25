@@ -139,10 +139,12 @@ const IncidentReportForm = () => {
     }
 
     try {
+      const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem("accessToken"); // Retrieve token from storage or context
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/report-incident/",
+        `${API_URL}/api/report-incident/`,
         formDataToSend,
         {
           headers: {
@@ -228,6 +230,10 @@ const IncidentReportForm = () => {
                   className="w-full bg-slate-800 text-gray-100 px-4 py-3 rounded-xl border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] transition-all duration-200"
                 >
                   <option value="">Select an incident type</option>
+                  <option value="Pothole/Road Damage">Pothole/Road Damage</option>
+                  <option value="Water Pipe Burst">Water Pipe Burst</option>
+                  <option value="Overflowing Trash Bins">Overflowing Trash Bins</option>
+                  <option value="Illegal Dumping">Illegal Dumping</option>
                   <option value="Domestic Violence">Domestic Violence</option>
                   <option value="Child Abuse">Child Abuse</option>
                   <option value="Sexual Harassment">Sexual Harassment</option>
