@@ -113,14 +113,23 @@ export default function UserDashboard() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Your Dashboard</Text>
 
-      {/* Chatbot Button */}
+      {/* Quick Action Buttons */}
       <View style={{ alignItems: 'center', marginBottom: 12 }}>
-        <TouchableOpacity
-          style={{ backgroundColor: '#0bf', paddingVertical: 10, paddingHorizontal: 28, borderRadius: 10 }}
-          onPress={() => router.push('../ChatBotScreen')}
-        >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Open Chatbot</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
+          <TouchableOpacity
+            style={{ backgroundColor: '#0bf', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 }}
+            onPress={() => router.push('../ChatBotScreen')}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Open Chatbot</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={{ backgroundColor: '#ff5252', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 }}
+            onPress={() => router.push('/(tabs)/recentincident1')}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Recent Incidents</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       {/* Dashboard Stats Cards - now vertical */}
 
@@ -235,6 +244,24 @@ export default function UserDashboard() {
                     ) : (
                       <Text style={styles.incidentDesc}>Location: {locationStr}</Text>
                     )}
+                    
+                    {/* View Details Button */}
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: '#0bf',
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 8,
+                        marginTop: 10,
+                        alignSelf: 'flex-start',
+                      }}
+                      onPress={() => router.push({
+                        pathname: '/(tabs)/incident-detail',
+                        params: { id: incident.id }
+                      })}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>View Details</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               </TouchableOpacity>
