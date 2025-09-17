@@ -325,6 +325,7 @@ const Navbar = () => {
           { route: "/heatmap", label: "Heatmaps" },
           { route: "/voice-report", label: "Voice Report" },
           { route: "/chatbot", label: "Saathi AI" },
+          { route: "/upload", label: "VR Viewer" },
         ].map((item) => (
           <MenuItem
             key={item.route}

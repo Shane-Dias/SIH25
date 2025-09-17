@@ -23,7 +23,11 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const faqRef = useRef(null);
   const location = useLocation();
-
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
+  console.log("API Host:", API_HOST);
+  console.log("API_URL:", API_URL);
+  
   useEffect(() => {
     if (location.state?.scrollToFaq && faqRef.current) {
       const offset = 70;
@@ -38,7 +42,7 @@ const Home = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          "http://127.0.0.1:8000/api/advanced-incident-analysis/",
+          `${API_URL}/api/advanced-incident-analysis/`,
           {
             method: "GET",
             headers: { Accept: "application/json" },

@@ -280,9 +280,10 @@ const IncidentReportForm = () => {
 
     try {
       const token = localStorage.getItem("accessToken"); // Retrieve token from storage or context
-
+      const API_HOST = process.env.REACT_APP_API_HOST;
+      const API_PORT = process.env.REACT_APP_API_PORT;
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/report-incident/",
+        `http://${API_HOST}:${API_PORT}/api/report-incident/`,
         formDataToSend,
         {
           headers: {

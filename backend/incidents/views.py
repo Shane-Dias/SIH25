@@ -3,9 +3,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from geopy.distance import great_circle
 from utils.comments import contains_cuss_words, is_spam
-from incidents.models import DisasterReliefStations, FireStations, PoliceStations
+from incidents.models import DisasterReliefStations, FireStations, PoliceStations, Admin, MunicipalCorporation
 from .serializers import CommentSerializer, IncidentSerializer, UserSerializer
-from incidents.models import DisasterReliefStations, FireStations, PoliceStations, Admin
+from incidents.models import DisasterReliefStations, FireStations, PoliceStations, Admin, MunicipalCorporation
 from .serializers import IncidentSerializer
 from django.core.mail import send_mail
 import requests
@@ -15,7 +15,7 @@ from django.contrib.auth.hashers import check_password
 from twilio.rest import Client
 import json
 from geopy.distance import great_circle
-from .models import Incidents, FireStations, PoliceStations, User, Comment, Hospital, NGO
+from .models import Incidents, FireStations, PoliceStations, User, Comment, Hospital, MunicipalCorporation
 from .serializers import IncidentSerializer
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import make_password
@@ -51,7 +51,7 @@ from datetime import timedelta
 
 model = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
-                api_key="AIzaSyDv7RThoILjeXAryluncDRZ1QeFxAixR7Q",
+                api_key="AIzaSyDLoq6B6LqlzqVH4umeSak-fOMIHiXAWOA",
                 max_retries=3,
                 retry_wait_strategy=wait_exponential(multiplier=1, min=4, max=10)
             )
@@ -154,27 +154,38 @@ class form_report(APIView):
         self.llm = model
         self.prompt = ChatPromptTemplate.from_messages([
             ("system", """
-            Analyze the incident report and determine its severity level strictly based on the given description, using the following criteria:
+             Analyze the incident report and determine its severity level strictly based on the given description, using the following criteria:
+               high:
 
-            high:
-            Immediate threat to life
-            Multiple casualties
-            Large-scale property damage
-            Ongoing dangerous situation
-            
-            medium:
-            Non-life-threatening injuries
-            Significant property damage
-            Potential for situation escalation
-            Missing persons cases
+               Immediate threat to life
+               Multiple casualties
+               Large-scale property damage
+               Ongoing dangerous situation
+               Major infrastructure failures (gas leaks, building collapse, major water pipe bursts)
+               Situations requiring immediate emergency response
 
-            low:
-            Minor incidents
-            No injuries
-            Minor property damage
-            Non-emergency situations
-            
-            You must return only one of these words: high, medium, or low based on the information provided. If details are unclear, make the best possible classification rather than asking for more details. Do not include explanations—return only the classification.
+               medium:
+
+               Non-life-threatening injuries
+               Significant property damage
+               Potential for situation escalation
+               Missing persons cases
+               Infrastructure issues affecting multiple people (power outages, major road damage, sewer overflows)
+               Public safety concerns (dangerous buildings, traffic signal failures in busy areas)
+               Environmental hazards (significant pollution, tree falls blocking roads)
+
+               low:
+
+               Minor incidents
+               No injuries
+               Minor property damage
+               Non-emergency situations
+               Routine civic issues (potholes, broken streetlights, overflowing trash bins)
+               Minor infrastructure problems (single household water issues, minor road damage)
+               Non-urgent maintenance needs (damaged trees not blocking traffic, minor noise complaints)
+               Administrative issues (illegal vendors, minor encroachment, non-emergency harassment)
+
+               You must return only one of these words: high, medium, or low based on the information provided. If details are unclear, make the best possible classification rather than asking for more details. Do not include explanations—return only the classification.
             """),
             ("human", "{user_input}")
         ])
@@ -301,6 +312,10 @@ class form_report(APIView):
         """Assigns nearest police, fire, and hospital stations to the incident"""
 
         station_map = {
+            'Pothole/Road Damage': [PoliceStations, MunicipalCorporation],
+            'Water Pipe Burst': [PoliceStations, MunicipalCorporation],
+            'Overflowing Trash Bins': [PoliceStations, MunicipalCorporation],
+            'Illegal Dumping': [PoliceStations, MunicipalCorporation],
             'Domestic Violence': [PoliceStations],
             'Child Abuse': [PoliceStations],
             'Sexual Harassment': [PoliceStations],
@@ -328,6 +343,8 @@ class form_report(APIView):
                     incident.fire_station = nearest_station
                 elif station_model == Hospital:
                     incident.hospital_station = nearest_station
+                elif station_model == MunicipalCorporation:
+                    incident.municipal_corporation = nearest_station
 
                 # Notify nearest station
                 self.notify_new_incident(nearest_station, incident)
@@ -447,6 +464,10 @@ class voicereport(APIView):
 
         # Nearest stations lookup
         station_map = {
+            'Pothole/Road Damage': [PoliceStations, MunicipalCorporation],
+            'Water Pipe Burst': [PoliceStations, MunicipalCorporation],
+            'Overflowing Trash Bins': [PoliceStations, MunicipalCorporation],
+            'Illegal Dumping': [PoliceStations, MunicipalCorporation],
             'Domestic Violence': [PoliceStations],
             'Child Abuse': [PoliceStations],
             'Sexual Harassment': [PoliceStations],
@@ -460,7 +481,7 @@ class voicereport(APIView):
             'Other': [None]
         }
         station_models = station_map.get(incident.get('incidentType'), [])
-        nearest_stations = {'police_station': None, 'fire_station': None, 'hospital_station': None}
+        nearest_stations = {'police_station': None, 'fire_station': None, 'hospital_station': None, 'municipal_corporation': None}
 
         for station_model in station_models:
             if station_model is None:
@@ -474,6 +495,8 @@ class voicereport(APIView):
                     nearest_stations['fire_station'] = nearest_station
                 elif station_model == Hospital:
                     nearest_stations['hospital_station'] = nearest_station
+                elif station_model == MunicipalCorporation:
+                    nearest_stations['municipal_corporation'] = nearest_station
 
                 try:
                     send_email_example("New Incident Alert", f"New {incident['incidentType']} \nreported at {incident['location']}", nearest_station.email)
@@ -483,6 +506,7 @@ class voicereport(APIView):
         incident_obj.police_station = nearest_stations['police_station']
         incident_obj.fire_station = nearest_stations['fire_station']
         incident_obj.hospital_station = nearest_stations['hospital_station']
+        incident_obj.municipal_corporation = nearest_stations['municipal_corporation']
         incident_obj.save()
 
         return Response({"message": "Incident reported successfully!", "incident_id": incident_obj.id}, status=status.HTTP_201_CREATED)
@@ -526,7 +550,7 @@ def send_email_example(subject, message, email):
     send_mail(
         subject=subject,
         message=message,
-        from_email='mayankhmehta80@gmail.com',
+        from_email='jacelljamble@gmail.com',
         recipient_list=[email],
         fail_silently=False,
     )
@@ -653,6 +677,8 @@ def all_station_incidents(request):
         incidents = Incidents.objects.filter(fire_station=admin.fire_station, true_or_false=True)
     elif admin.hospital:
         incidents = Incidents.objects.filter(hospital_station=admin.hospital, true_or_false=True)
+    elif admin.municipal_corporation:
+        incidents = Incidents.objects.filter(municipal_corporation=admin.municipal_corporation, true_or_false=True)
     else:
         return Response(
             {"error": "Admin is not associated with any station"},
@@ -948,6 +974,7 @@ def advanced_incident_analysis(request):
                 .values('incidentType')
                 .annotate(
                     total_incidents=Count('id'),
+                    municipal_corporation_involved=Count('municipal_corporation', filter=Q(municipal_corporation__isnull=False)),
                     police_involved=Count('police_station', filter=Q(police_station__isnull=False)),
                     fire_involved=Count('fire_station', filter=Q(fire_station__isnull=False)),
                     hospital_involved=Count('hospital_station', filter=Q(hospital_station__isnull=False)),
@@ -960,6 +987,15 @@ def advanced_incident_analysis(request):
                     ) | Q(
                         fire_station__isnull=False,
                         hospital_station__isnull=False
+                    ) | Q(
+                        police_station__isnull=False,
+                        municipal_corporation__isnull=False
+                    ) | Q(
+                        municipal_corporation__isnull=False,
+                        fire_station__isnull=False
+                    ) | Q(
+                        hospital_station__isnull=False,
+                        municipal_corporation__isnull=False
                     ))
                 )
                 .order_by('incidentType')
@@ -985,7 +1021,8 @@ def advanced_incident_analysis(request):
                 queryset.filter(
                     Q(police_station__isnull=False) |
                     Q(fire_station__isnull=False) |
-                    Q(hospital_station__isnull=False)
+                    Q(hospital_station__isnull=False) |
+                    Q(municipal_corporation__isnull=False)
                 ).distinct().count() * 100.0 / total_incidents
                 if total_incidents > 0 else 0
             )
@@ -1144,6 +1181,9 @@ def get_incident_analytics(request):
         base_queryset = base_queryset.filter(fire_station=admin.fire_station)
     elif admin.hospital:
         base_queryset = base_queryset.filter(hospital_station=admin.hospital)
+    elif admin.municipal_corporation:
+        base_queryset = base_queryset.filter(municipal_corporation=admin.municipal_corporation)
+    
     
     # Get date range for last 30 days
     end_date = timezone.now()

@@ -25,6 +25,9 @@ import ViewDetails from "./pages/ViewDetails";
 import UserRoute from "./protected-routes/UserRoute";
 import AdminRoute from "./protected-routes/AdminRoute";
 import UserProfile from "./pages/UserProfile";
+import VRViewer from "./pages/VRViewer";
+import UploadPage from "./pages/UploadPage";
+import PhotoList from "./pages/PhotoList";
 import { LocationProvider } from "../src/context/LocationContext";
 
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
@@ -72,6 +75,9 @@ const App = () => {
                 </Route>
                 <Route path="/my-reports" element={<UserDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/upload" element={<UploadPage />} />
+                <Route path="/photos" element={<PhotoList />} />
+                <Route path="/vr/:photoId" element={<VRViewer />} />
                 <Route path="/About" element={<AboutUs />} />
                 <Route path="/heatmap" element={<HeatMap2 />} />
                 <Route path="/voice-report" element={<VoiceToText />} />
