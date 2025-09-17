@@ -120,7 +120,7 @@ const UserDashboard = () => {
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
         <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
           {/* Header */}
-          <div className="mb-10">
+          <div className="mb-10 mt-4">
             <h1 className="text-xl text-left md:text-center md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-600 [text-shadow:_0_0_30px_rgb(6_182_212_/_45%)]">
               Your Dashboard
             </h1>
@@ -135,7 +135,7 @@ const UserDashboard = () => {
           {/* Dashboard Stats Cards */}
           <div className="flex flex-col md:flex-row  items-center gap-6  mb-8 justify-center ">
             {/* Total Incidents Card */}
-            <div className="bg-white/5 p-6 rounded-2xl cursor-pointer border-white/10 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,255,255,0.15),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80 border-2 border-red-500">
+            <div className="bg-white/5 p-6 rounded-2xl cursor-pointer border-red-400 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,255,255,0.15),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80 border-2 border-red-500">
               <div>
                 <h3 className="text-gray-400 font-medium mb-1">
                   Total Incidents
@@ -147,7 +147,7 @@ const UserDashboard = () => {
 
             {/* Resolved Incidents Card */}
 
-            <div className="bg-white/5 cursor-pointer border-2 border-white/10 p-6 rounded-2xl shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(100,255,100,0.2),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80 hover:border-green-500 ">
+            <div className="bg-white/5 cursor-pointer border-2 border-emerald-400 p-6 rounded-2xl shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(100,255,100,0.2),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80 hover:border-green-500 ">
               <div>
                 <h3 className="text-gray-400 font-medium mb-1">Resolved</h3>
                 <p className="text-3xl font-bold text-white">{resolved}</p>
@@ -165,8 +165,8 @@ const UserDashboard = () => {
             </div>
           </div>
 
-          {/* All Incidents Table */}
-          <div className="rounded-2xl border border-white/10  overflow-hidden">
+          {/* All Incidents - Desktop Table View */}
+          <div className="hidden md:block rounded-2xl border border-white/10 overflow-hidden">
             <h2 className="text-xl font-semibold text-white p-6 border-b border-white/10 bg-white/5">
               All Incidents
             </h2>
@@ -235,8 +235,36 @@ const UserDashboard = () => {
                           </span>
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center justify-center">
-                            <OrderProgress steps1={step} />
+                          <div className="flex items-center justify-center flex-col">
+                            <div className="flex items-center space-x-2">
+                              {/* Status Indicator */}
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-2">
+                                  {/* Step 1 */}
+                                  <div className={`w-3 h-3 rounded-full ${step >= 0 ? 'bg-gradient-to-r from-blue-400 to-blue-500 shadow-lg shadow-blue-400/50' : 'bg-gray-600'}`}></div>
+                                  <div className={`w-12 h-1 ${step >= 1 ? 'bg-gradient-to-r from-blue-400 to-yellow-400' : 'bg-gray-600'} rounded-full`}></div>
+                                  
+                                  {/* Step 2 */}
+                                  <div className={`w-3 h-3 rounded-full ${step >= 1 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 shadow-lg shadow-yellow-400/50' : 'bg-gray-600'}`}></div>
+                                  <div className={`w-12 h-1 ${step >= 2 ? 'bg-gradient-to-r from-yellow-400 to-green-400' : 'bg-gray-600'} rounded-full`}></div>
+                                  
+                                  {/* Step 3 */}
+                                  <div className={`w-3 h-3 rounded-full ${step >= 2 ? 'bg-gradient-to-r from-green-400 to-green-500 shadow-lg shadow-green-400/50' : 'bg-gray-600'}`}></div>
+                                </div>
+                              </div>
+                            </div>
+                            {/* Current Status Label */}
+                            <div className="mt-2">
+                              <span className={`text-xs font-medium ${
+                                step === 0 ? 'text-blue-400' : 
+                                step === 1 ? 'text-yellow-400' : 
+                                step === 2 ? 'text-green-400' : 'text-gray-400'
+                              }`}>
+                                {step === 0 ? 'Reported' : 
+                                 step === 1 ? 'Under Investigation' : 
+                                 step === 2 ? 'Resolved' : 'Unknown'}
+                              </span>
+                            </div>
                           </div>
                         </td>
                         <td className="p-4">
@@ -277,6 +305,127 @@ const UserDashboard = () => {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* All Incidents - Mobile Card View */}
+          <div className="md:hidden">
+            <h2 className="text-xl font-semibold text-white mb-6">
+              All Incidents
+            </h2>
+            <div className="space-y-4">
+              {incidents.map((incident) => {
+                let step = 0; // Default value
+
+                if (incident?.status?.toLowerCase() === "resolved") {
+                  step = 2;
+                } else if (
+                  incident?.status?.toLowerCase() === "under investigation"
+                ) {
+                  step = 1;
+                }
+
+                return (
+                  <div
+                    key={incident.id}
+                    className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] hover:bg-white/10 transition-all"
+                  >
+                    {/* Header with ID and Title */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-gray-400 text-sm">#{incident.id}</span>
+                        <h3 className="text-white font-semibold text-lg">
+                          {incident.incidentType}
+                        </h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={incident.maps_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors p-2 bg-sky-400/10 rounded-lg"
+                        >
+                          <MapPin className="w-5 h-5" />
+                        </a>
+                        <Popover>
+                          <PopoverTrigger>
+                            <button className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors p-2 bg-sky-400/10 rounded-lg">
+                              <MessageCircle className="w-5 h-5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
+                            <div className="p-4 bg-transparent rounded-xl border border-white/20">
+                              <h3 className="text-lg font-semibold text-white mb-2">
+                                Chat with Authorities
+                              </h3>
+                              <p className="text-gray-300 mb-4 text-sm">
+                                Start a conversation with authorities to
+                                discuss this incident.
+                              </p>
+                              <button className="w-full px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all">
+                                Start Chat
+                              </button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="mb-4">
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        {incident.description}
+                      </p>
+                    </div>
+
+                    {/* Severity Badge */}
+                    <div className="mb-4">
+                      <span
+                        className={`inline-block rounded-lg px-3 py-1 bg-transparent text-sm font-bold ${getSeverityColor(
+                          incident.severity
+                        )}`}
+                      >
+                        {incident.severity?.charAt(0).toUpperCase() +
+                          incident.severity?.slice(1)} Severity
+                      </span>
+                    </div>
+
+                    {/* Status Progress */}
+                    <div className="mb-2">
+                      <p className="text-gray-400 text-sm mb-3">Status:</p>
+                      <div className="flex items-center space-x-2">
+                        {/* Modern Progress Bar */}
+                        <div className="flex items-center space-x-3 w-full">
+                          <div className="flex items-center space-x-2">
+                            {/* Step 1 */}
+                            <div className={`w-3 h-3 rounded-full ${step >= 0 ? 'bg-gradient-to-r from-blue-400 to-blue-500 shadow-lg shadow-blue-400/50' : 'bg-gray-600'}`}></div>
+                            <div className={`w-16 h-1 ${step >= 1 ? 'bg-gradient-to-r from-blue-400 to-yellow-400' : 'bg-gray-600'} rounded-full`}></div>
+                            
+                            {/* Step 2 */}
+                            <div className={`w-3 h-3 rounded-full ${step >= 1 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 shadow-lg shadow-yellow-400/50' : 'bg-gray-600'}`}></div>
+                            <div className={`w-16 h-1 ${step >= 2 ? 'bg-gradient-to-r from-yellow-400 to-green-400' : 'bg-gray-600'} rounded-full`}></div>
+                            
+                            {/* Step 3 */}
+                            <div className={`w-3 h-3 rounded-full ${step >= 2 ? 'bg-gradient-to-r from-green-400 to-green-500 shadow-lg shadow-green-400/50' : 'bg-gray-600'}`}></div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Current Status Label */}
+                      <div className="mt-3">
+                        <span className={`text-sm font-medium ${
+                          step === 0 ? 'text-blue-400' : 
+                          step === 1 ? 'text-yellow-400' : 
+                          step === 2 ? 'text-green-400' : 'text-gray-400'
+                        }`}>
+                          {step === 0 ? 'Reported' : 
+                           step === 1 ? 'Under Investigation' : 
+                           step === 2 ? 'Resolved' : 'Unknown'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

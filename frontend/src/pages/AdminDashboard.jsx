@@ -1,19 +1,10 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
-import { Timer } from "lucide-react";
-import { MessageCircle } from "lucide-react";
-import { MapPin } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { AlertTriangle, CheckCircle2, Timer, MessageCircle, MapPin } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { MdOutlineReport } from "react-icons/md";
-import { MdReport } from "react-icons/md";
+import { MdOutlineReport, MdReport } from "react-icons/md";
 import AdminCharts from "./chart";
 
 const AdminDashboard = () => {
@@ -27,11 +18,20 @@ const AdminDashboard = () => {
   const [completedId, setCompletedId] = useState([]);
   const [falseReport, setFalseReport] = useState([{}]);
   const [flaggedIncidents, setFlaggedIncidents] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const API_HOST = import.meta.env.VITE_API_HOST;
   const API_URL = import.meta.env.VITE_API_URL;
-
   const token = localStorage.getItem("accessToken");
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const getincidents = async () => {
     try {
       const response = await fetch(
@@ -56,17 +56,15 @@ const AdminDashboard = () => {
     }
   };
 
-  useEffect(() => {}, [incidents]);
-
   useEffect(() => {
     getincidents();
   }, []);
 
   const getSeverityColor = (severity) => {
-    if (severity === "low") return "text-blue-700 border-blue-600 bg-blue-200";
-    if (severity === "medium") return "text-yellow-700 border-yellow-600";
-    if (severity === "high") return "text-red-700 border-red-600 bg-red-200";
-    return "text-gray-700 border-gray-600 bg-gray-200";
+    if (severity === "low") return "text-blue-400 border-blue-400 bg-blue-400/10";
+    if (severity === "medium") return "text-yellow-400 border-yellow-400 bg-yellow-400/10";
+    if (severity === "high") return "text-red-400 border-red-400 bg-red-400/10";
+    return "text-gray-400 border-gray-400 bg-gray-400/10";
   };
 
   const { logout } = useAuth();
@@ -128,7 +126,7 @@ const AdminDashboard = () => {
   const fetchFlaggedIncidents = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/all_station_incidents/",
+        `${API_URL}/api/all_station_incidents/`,
         {
           method: "GET",
           headers: {
@@ -139,7 +137,7 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const flagged = data.filter((incident) => incident.true_or_false); // Assuming 'true_or_false' marks flagged reports
+        const flagged = data.filter((incident) => incident.true_or_false);
         setFlaggedIncidents(flagged);
       } else {
         console.error("Failed to fetch flagged incidents");
@@ -149,7 +147,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Fetch flagged incidents when the component mounts
   useEffect(() => {
     fetchFlaggedIncidents();
   }, []);
@@ -157,7 +154,7 @@ const AdminDashboard = () => {
   const handleNewTask = async (id) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/update_incident/${id}/`,
+        `${API_URL}/api/update_incident/${id}/`,
         {
           method: "PATCH",
           headers: {
@@ -168,7 +165,7 @@ const AdminDashboard = () => {
       );
 
       if (response.ok) {
-        getincidents(); // Refresh incidents after update
+        getincidents();
       } else {
         console.error("Failed to update incident");
       }
@@ -180,7 +177,7 @@ const AdminDashboard = () => {
   const handleMarkAsCompleted = async (id) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/update_incident/${id}/`,
+        `${API_URL}/api/update_incident/${id}/`,
         {
           method: "PATCH",
           headers: {
@@ -191,7 +188,7 @@ const AdminDashboard = () => {
       );
 
       if (response.ok) {
-        getincidents(); // Refresh incidents after update
+        getincidents();
       } else {
         console.error("Failed to mark incident as completed");
       }
@@ -211,7 +208,7 @@ const AdminDashboard = () => {
   const handleFalseReport = async (id) => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/all_station_incidents/",
+        `${API_URL}/api/all_station_incidents/`,
         {
           method: "POST",
           headers: {
@@ -235,542 +232,292 @@ const AdminDashboard = () => {
     }
   };
 
+  // Incident Card Component for consistent styling
+  const IncidentCard = ({ incident, type = "default" }) => {
+    const isNew = type === "new";
+    const isCompleted = type === "completed";
+    const isFlagged = type === "flagged";
+    
+    let step = 0;
+    if (incident?.status?.toLowerCase() === "resolved") {
+      step = 2;
+    } else if (incident?.status?.toLowerCase() === "under investigation") {
+      step = 1;
+    }
+
+    const borderClass = isCompleted 
+      ? "border-green-500" 
+      : isFlagged 
+      ? "border-red-500" 
+      : `border ${getSeverityColor(incident.severity).split(' ')[1]}`;
+
+    const bgClass = isCompleted 
+      ? "bg-green-500/5" 
+      : isFlagged 
+      ? "bg-red-500/5" 
+      : `bg-white/5`;
+
+    return (
+      <div className={`p-4 md:p-6 rounded-2xl ${bgClass} border ${borderClass} shadow-lg transition-all hover:scale-[1.02] w-full h-full flex flex-col`}>
+        {incident.count > 1 && (
+          <div className="text-lg md:text-xl font-bold text-red-500 text-center mb-3 animate-pulse">
+            {isNew ? "Multiple Reports!!" : "Mass Report!!"}
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center mb-4">
+          <span className={`px-3 py-1 rounded-full font-bold text-sm md:text-base ${getSeverityColor(incident.severity)}`}>
+            {incident.severity?.charAt(0).toUpperCase() + incident.severity?.slice(1)}
+          </span>
+          
+          {isCompleted ? (
+            <div className="px-3 py-1 border-2 rounded-lg border-green-400 text-green-300 font-bold text-sm">
+              Completed
+            </div>
+          ) : isFlagged ? (
+            <div className="px-3 py-1 border-2 rounded-lg border-red-400 text-red-300 font-bold text-sm">
+              Flagged
+            </div>
+          ) : (
+            falseReport.some((report) => report.incidentid === incident.id) ? (
+              <MdReport className="text-2xl md:text-3xl text-red-500 cursor-pointer" title="Marked as False Report" />
+            ) : (
+              <MdOutlineReport
+                onClick={() => handleFalseReport(incident.id)}
+                className="text-2xl md:text-3xl text-white hover:text-red-500 cursor-pointer transition-colors"
+                title="Mark as False Report"
+              />
+            )
+          )}
+        </div>
+
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-base md:text-lg font-semibold text-white line-clamp-1">
+            {incident.incidentType}
+          </h3>
+          <p className="text-white font-bold text-sm md:text-base">
+            ID: #{incident.id}
+          </p>
+        </div>
+
+        <p className="text-gray-300 text-sm mb-3 line-clamp-3 flex-grow">
+          {incident.description}
+        </p>
+
+        <div className="mb-3">
+          <p className="text-gray-300 text-sm">
+            Reported By:{" "}
+            <span className="font-semibold text-white">
+              {incident.reported_by?.first_name || "Unknown"} {incident.reported_by?.last_name || ""}
+            </span>
+          </p>
+          <p className="text-gray-300 text-sm">
+            User Score: {incident.score}
+          </p>
+        </div>
+
+        <div className="flex items-center mb-4">
+          <MapPin className="text-sky-400 mr-2" size={16} />
+          <a
+            href={incident.maps_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-400 text-sm hover:text-sky-300 transition-colors"
+          >
+            View Location
+          </a>
+        </div>
+
+        <div className="mt-auto">
+          {isNew ? (
+            <div className="flex flex-col md:flex-row gap-2">
+              <button
+                className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg flex-1 transition-all text-sm md:text-base"
+                onClick={() => handleNewTask(incident.id)}
+              >
+                Accept Task
+              </button>
+              <button
+                className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-2 rounded-lg flex-1 transition-all text-sm md:text-base"
+                onClick={() => navigate(`/view-details/${incident.id}`)}
+              >
+                View Details
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger>
+                    <button className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors p-2">
+                      <MessageCircle size={18} className="mr-1" />
+                      <span className="text-sm">Chat</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900 border border-white/20 w-80">
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold text-white mb-2">
+                        Chat with {incident.reported_by?.first_name || "Unknown"}
+                      </h3>
+                      <p className="text-white mb-4 text-sm">
+                        Start a conversation to discuss this incident.
+                      </p>
+                      <div className="flex justify-end">
+                        <button className="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition text-sm">
+                          Start Chat
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {!isCompleted && !isFlagged && incident.status !== "Resolved" && (
+                  <button
+                    onClick={() => handleMarkAsCompleted(incident.id)}
+                    className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-all text-sm flex-1"
+                  >
+                    Mark Completed
+                  </button>
+                )}
+              </div>
+              
+              <button
+                className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-2 rounded-lg w-full transition-all text-sm"
+                onClick={() => navigate(`/view-details/${incident.id}`)}
+              >
+                View Details
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
-      <div className="flex-grow p-8 pb-24">
-        <div className="mb-10">
-          <h1 className="text-xl text-left md:text-center md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-600 [text-shadow:_0_0_30px_rgb(6_182_212_/_45%)]">
+      <div className="flex-grow p-4 md:p-8 pb-20 md:pb-24 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 -ml-20 md:mb-10 relative">
+          <h1 className="text-xl md:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-600 text-center md:text-center [text-shadow:_0_0_30px_rgb(6_182_212_/_45%)]">
             Admin Dashboard
           </h1>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-500/10 text-red-500 font-bold border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all absolute right-8 top-20 md:top-28"
+            className="px-3 py-1 md:px-4 md:py-2 bg-red-500/10 text-red-500 font-bold border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all absolute right-0 top-0 text-sm md:text-base"
           >
             Logout
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row  items-center gap-6  mb-8 justify-center ">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Total Incidents Card */}
-          <div className="bg-white/5  p-6 rounded-2xl cursor-pointer border-[4px] border-red-700 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,80,80,0.15),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80">
+          <div className="bg-white/5 p-4 md:p-6 rounded-2xl cursor-pointer border-2 border-red-500 shadow-lg transition-all hover:scale-105 flex items-center justify-between group">
             <div>
-              <h3 className="text-gray-400 font-medium mb-1">
+              <h3 className="text-gray-400 font-medium mb-1 text-sm md:text-base">
                 Total Incidents
               </h3>
-              <p className="text-3xl font-bold text-white">{total}</p>
+              <p className="text-2xl md:text-3xl font-bold text-white">{total}</p>
             </div>
-            <AlertTriangle className="text-red-400 w-12 h-12 group-hover:scale-110 transition-transform" />
+            <AlertTriangle className="text-red-400 w-8 h-8 md:w-12 md:h-12 group-hover:scale-110 transition-transform" />
           </div>
 
           {/* Resolved Incidents Card */}
-
-          <div className="bg-white/5 cursor-pointer  p-6 rounded-2xl border-[4px] border-green-700 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(100,255,100,0.2),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80">
+          <div className="bg-white/5 cursor-pointer p-4 md:p-6 rounded-2xl border-2 border-green-500 shadow-lg transition-all hover:scale-105 flex items-center justify-between group">
             <div>
-              <h3 className="text-gray-400 font-medium mb-1">Resolved</h3>
-              <p className="text-3xl font-bold text-white">{resolved}</p>
+              <h3 className="text-gray-400 font-medium mb-1 text-sm md:text-base">Resolved</h3>
+              <p className="text-2xl md:text-3xl font-bold text-white">{resolved}</p>
             </div>
-            <CheckCircle2 className="text-emerald-400 w-12 h-12 group-hover:scale-110 transition-transform" />
+            <CheckCircle2 className="text-emerald-400 w-8 h-8 md:w-12 md:h-12 group-hover:scale-110 transition-transform" />
           </div>
 
           {/* Unresolved Incidents Card */}
-          <div className="bg-white/5 backdrop-blur-sm p-6 cursor-pointer rounded-2xl border-[4px] border-yellow-700 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,204,0,0.2),0px_15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between group w-64 md:w-80">
+          <div className="bg-white/5 p-4 md:p-6 cursor-pointer rounded-2xl border-2 border-yellow-500 shadow-lg transition-all hover:scale-105 flex items-center justify-between group">
             <div>
-              <h3 className="text-gray-400 font-medium mb-1">Unresolved</h3>
-              <p className="text-3xl font-bold text-white">{unresolved}</p>
+              <h3 className="text-gray-400 font-medium mb-1 text-sm md:text-base">Unresolved</h3>
+              <p className="text-2xl md:text-3xl font-bold text-white">{unresolved}</p>
             </div>
-            <Timer className="text-yellow-400 w-12 h-12 group-hover:scale-110 transition-transform" />
+            <Timer className="text-yellow-400 w-8 h-8 md:w-12 md:h-12 group-hover:scale-110 transition-transform" />
           </div>
         </div>
 
-        {/*NEW INCIDNETS*/}
+        {/* New Incidents */}
         {newTasks.length === 0 ? (
-          <h2 className="text-2xl my-11 text-white">
+          <h2 className="text-xl md:text-2xl my-8 text-white text-center">
             No New Reports Available
           </h2>
         ) : (
-          <div>
-            <h1 className="text-4xl text-white font-bold mt-10 md:text-left text-center">
-              New Incidents:
+          <div className="mb-10 md:mb-14">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 text-center md:text-left">
+              New Incidents
             </h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 mb-14 ">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {newTasks.map((incident) => (
-                <div
-                  key={incident.id}
-                  className={`p-6 rounded-2xl bg-transparent  border ${getSeverityColor(
-                    incident.severity
-                  )} shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,255,255,0.15),0px_15px_50px_rgba(0,0,0,0.8)] ${getSeverityColor(
-                    incident.severity
-                  )} ${
-                    incident.count > 1
-                      ? `border-4 border-red-500 ${
-                          incident.severity === "low"
-                            ? "animate-[pulse_1.4s_infinite]"
-                            : incident.severity === "medium"
-                            ? "animate-[pulse_1.4s_infinite]"
-                            : incident.severity === "high"
-                            ? "animate-[pulse_1.4s_infinite]"
-                            : ""
-                        }  shadow-lg shadow-red-500`
-                      : ""
-                  } w-full`}
-                >
-                  {incident.count > 1 ? (
-                    <div className="text-3xl text-center text-red-500">
-                      Multiple Reports!!
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                  <div className="flex justify-between items-center mb-4">
-                    <span
-                      className={`px-3 py-1 rounded-full font-bold text-lg ${getSeverityColor(
-                        incident.severity
-                      )}`}
-                    >
-                      {incident.severity?.charAt(0).toUpperCase() +
-                        incident.severity?.slice(1)}
-                    </span>
-                    {falseReport.some(
-                      (report) => report.incidentid === incident.id
-                    ) ? (
-                      <MdReport
-                        className="text-3xl text-red-500 hover:cursor-pointer"
-                        title="Marked as False Report"
-                      />
-                    ) : (
-                      <MdOutlineReport
-                        onClick={() => handleFalseReport(incident.id)}
-                        className="text-3xl text-white hover:text-red-500 cursor-pointer"
-                        title="Mark as False Report"
-                      />
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-semibold text-white">
-                      {incident.incidentType}
-                    </h3>
-                    <p className="text-white font-bold text-xl">
-                      ID: #{incident.id}
-                    </p>
-                  </div>
-                  <p className="text-gray-300 text-sm mb-2 line-clamp-2 overflow-y-auto">
-                    {incident.description}
-                  </p>
-                  <p className="text-gray-300 text-sm mb-2">
-                    Reported By:{" "}
-                    <span className="font-semibold text-white">
-                      {incident.reported_by?.first_name || "Unknown"}{" "}
-                      {incident.reported_by?.last_name || ""}
-                    </span>
-                  </p>
-                  <p className="text-gray-300 text-sm mb-2">
-                    User Score: {incident.score}
-                  </p>
-                  <div className="flex gap-2 items-center ">
-                    <a
-                      href={incident.maps_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors"
-                    >
-                      <MapPin className="text-xl" />
-                    </a>
-                  </div>
-
-                  <div className="flex gap-4 mt-4">
-                    <button
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-5 py-2 rounded-lg w-full transition-all"
-                      onClick={() => handleNewTask(incident.id)}
-                    >
-                      Accept Task
-                    </button>
-                    <button
-                      className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg w-full transition-all"
-                      onClick={() => navigate(`/view-details/${incident.id}`)}
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
+                <IncidentCard key={incident.id} incident={incident} type="new" />
               ))}
             </div>
           </div>
         )}
 
-        {/*ACEPPTED INCIDENTS*/}
-
-        <h1 className="text-4xl font-semibold mb-5 text-white md:text-left text-center">
-          Accepted Incidents
-        </h1>
-        <form className="mb-6 flex flex-row items-center justify-start gap-4 space-y-2">
-          <label
-            htmlFor="severity-filter"
-            className="text-lg font-semibold text-gray-200 mb-2"
-          >
-            Filter by Severity:
-          </label>
-          <select
-            id="severity-filter"
-            className="cursor-pointer w-64 p-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:shadow-md transition-all"
-            value={filter}
-            onChange={(event) => handlefilter(event.target.value)}
-          >
-            <option value="All">All</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-        </form>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-          {filternew.map((incident) => (
-            <div
-              key={incident.id}
-              className={`p-6 rounded-2xl bg-transparent border ${getSeverityColor(
-                incident.severity
-              )} shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,255,255,0.15),0px_15px_50px_rgba(0,0,0,0.8)] ${getSeverityColor(
-                incident.severity
-              )} ${
-                incident.count > 1
-                  ? `border-4 border-red-500 ${
-                      incident.severity === "low"
-                        ? "animate-[pulse_1.4s_infinite]"
-                        : incident.severity === "medium"
-                        ? "animate-[pulse_1.4s_infinite]"
-                        : incident.severity === "high"
-                        ? "animate-[pulse_1.4s_infinite]"
-                        : ""
-                    }  shadow-lg shadow-red-500`
-                  : ""
-              } w-full`}
+        {/* Accepted Incidents */}
+        <div className="mb-10 md:mb-14">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white mb-4 text-center md:text-left">
+            Accepted Incidents
+          </h1>
+          
+          <div className="mb-6 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <label htmlFor="severity-filter" className="text-gray-200 font-medium text-sm md:text-base">
+              Filter by Severity:
+            </label>
+            <select
+              id="severity-filter"
+              className="cursor-pointer w-full md:w-48 p-2 md:p-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:shadow-md transition-all text-sm md:text-base"
+              value={filter}
+              onChange={(event) => handlefilter(event.target.value)}
             >
-              {incident.count > 1 ? (
-                <div className="text-3xl text-center text-red-500">
-                  Mass Report!!
-                </div>
-              ) : (
-                ""
-              )}
-              <div className="flex justify-between items-center mb-4">
-                <span
-                  className={`px-3 py-1 rounded-full font-bold text-lg ${getSeverityColor(
-                    incident.severity
-                  )}`}
-                >
-                  {incident.severity?.charAt(0).toUpperCase() +
-                    incident.severity?.slice(1)}
-                </span>
+              <option value="All">All</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
 
-                {falseReport.some(
-                  (report) => report.incidentid === incident.id
-                ) ? (
-                  <MdReport
-                    className="text-3xl text-red-500 hover:cursor-pointer"
-                    title="Marked as False Report"
-                  />
-                ) : (
-                  <MdOutlineReport
-                    onClick={() => handleFalseReport(incident.id)}
-                    className="text-3xl text-white hover:text-red-500 cursor-pointer"
-                    title="Mark as False Report"
-                  />
-                )}
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold text-white">
-                  {incident.incidentType}
-                </h3>
-                <p className="text-white font-bold text-xl">
-                  ID: #{incident.id}
-                </p>
-              </div>
-              <p className="text-gray-300 text-sm mb-2 line-clamp-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
-                {incident.description}
-              </p>
-
-              <p className="text-gray-300 text-sm mb-2">
-                Reported By:{" "}
-                <span className="font-semibold text-white">
-                  {incident.reported_by?.first_name || "Unknown"}{" "}
-                  {incident.reported_by?.last_name || ""}
-                </span>
-              </p>
-
-              <p className="text-gray-300 text-sm mb-2">
-                User Score: {incident.score}
-              </p>
-              <div className="flex gap-2 items-center mb-5 ">
-                <p className="text-gray-300 text-sm ">Location:</p>
-                <a
-                  href={incident.maps_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors"
-                >
-                  <MapPin className="text-xl" />
-                </a>
-              </div>
-
-              <div className="flex gap-4 items-center">
-                <Popover>
-                  <PopoverTrigger>
-                    <MessageCircle
-                      title="Contact Authorities"
-                      className="text-white cursor-pointer hover:text-white hover:scale-105 transition-transform text-3xl"
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
-                    <div className="p-4  bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900 w-full h-full">
-                      <h3 className="text-lg font-bold text-white mb-2">
-                        Chat with{" "}
-                        {incident.reported_by?.first_name || "Unknown"}{" "}
-                        {incident.reported_by?.last_name || ""}
-                      </h3>
-                      <p className="text-white mb-4">
-                        Start a conversation to discuss this incident.
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <button className="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition">
-                          Start Chat
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {incident.status !== "Resolved" && (
-                  <button
-                    onClick={() => handleMarkAsCompleted(incident.id)}
-                    className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600"
-                  >
-                    Mark as Completed
-                  </button>
-                )}
-
-                {incident.status === "Resolved" && (
-                  <span className="text-green-700 font-bold border border-green-500 px-2 py-1 rounded">
-                    Completed
-                  </span>
-                )}
-              </div>
-
-              <button
-                className="bg-gray-800 hover:bg-gray-950 text-white px-4 py-2 rounded-lg mt-4 relative bottom-0 right-0 w-full"
-                onClick={() => navigate(`/view-details/${incident.id}`)}
-              >
-                View Details
-              </button>
-            </div>
-          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {filternew.map((incident) => (
+              <IncidentCard key={incident.id} incident={incident} />
+            ))}
+          </div>
         </div>
 
-        {/*COmpleted Incidentss */}
-        <h1 className="text-4xl font-semibold mb-5 mt-12 text-green-300 md:text-left text-center">
-          Completed Incidents:
-        </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-          {completedId.map((incident) => (
-            <div
-              key={incident.id}
-              className={`p-6 rounded-2xl bg-transparent border-4 border-green-500 shadow-[0px_5px_15px_rgba(255,255,255,0.1),0px_10px_25px_rgba(0,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(0,255,0,0.15),0px_15px_50px_rgba(0,128,0,0.8)]`}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <span
-                  className={`px-3 py-1 rounded-full font-bold text-lg  ${getSeverityColor(
-                    incident.severity
-                  )}`}
-                >
-                  {incident.severity?.charAt(0).toUpperCase() +
-                    incident.severity?.slice(1)}
-                </span>
-                <div className="px-4 py-2 border-4 rounded-lg border-green-400 text-green-300 font-bold">
-                  Completed
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold text-white">
-                  {incident.incidentType}
-                </h3>
-                <p className="text-white font-bold text-xl">
-                  ID: #{incident.id}
-                </p>
-              </div>
-
-              <p className="text-gray-300 text-sm mb-2 line-clamp-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
-                {incident.description}
-              </p>
-
-              <p className="text-gray-300 text-sm mb-2">
-                Reported By:{" "}
-                <span className="font-semibold text-white">
-                  {incident.reported_by?.first_name || "Unknown"}{" "}
-                  {incident.reported_by?.last_name || ""}
-                </span>
-              </p>
-              <p className="text-gray-300 text-sm mb-2">
-                User Score: {incident.score}
-              </p>
-
-              <div className="flex gap-2 items-center mb-5 ">
-                <p className="text-gray-300 text-sm ">Location:</p>
-                <a
-                  href={incident.maps_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors"
-                >
-                  <MapPin className="text-xl" />
-                </a>
-              </div>
-
-              <div className="flex gap-4 items-center">
-                <Popover>
-                  <PopoverTrigger>
-                    <MessageCircle
-                      title="Contact Authorities"
-                      className="text-white cursor-pointer hover:text-white hover:scale-105 transition-transform text-3xl"
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
-                    <div className="p-4 bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900 w-full h-full">
-                      <h3 className="text-lg font-bold text-white mb-2">
-                        Chat with{" "}
-                        {incident.reported_by?.first_name || "Unknown"}{" "}
-                        {incident.reported_by?.last_name || ""}
-                      </h3>
-                      <p className="text-white mb-4">
-                        Start a conversation to discuss this incident.
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <button className="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition">
-                          Start Chat
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {incident.status !== "Resolved" && (
-                  <button
-                    onClick={() => handleMarkAsCompleted(incident.id)}
-                    className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600"
-                  >
-                    Mark as Completed
-                  </button>
-                )}
-              </div>
-
-              <button
-                className="bg-gray-800 hover:bg-gray-950 text-white px-4 py-2 rounded-lg mt-4 relative bottom-0 right-0 w-full"
-                onClick={() => navigate(`/view-details/${incident.id}`)}
-              >
-                View Details
-              </button>
+        {/* Completed Incidents */}
+        {completedId.length > 0 && (
+          <div className="mb-10 md:mb-14">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-green-300 mb-6 text-center md:text-left">
+              Completed Incidents
+            </h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {completedId.map((incident) => (
+                <IncidentCard key={incident.id} incident={incident} type="completed" />
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
 
-        {/* Flagged Incidentss
-        <h1 className="text-4xl text-red-500 font-semibold mb-5 mt-12  md:text-left text-center">
-          Flagged Incidents:
-        </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-          {flaggedIncidents.map((incident) => (
-            <div
-              key={incident.id}
-              className={`p-6 rounded-2xl bg-transparent border-4 border-red-500 shadow-[0px_5px_15px_rgba(255,0,0,0.1),0px_10px_25px_rgba(255,0,0,0.7)] transition-all hover:scale-105 hover:shadow-[0px_10px_30px_rgba(255,0,0,0.15),0px_15px_50px_rgba(128,0,0,0.8)]`}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <span
-                  className={`px-3 py-1 rounded-full font-bold text-lg ${getSeverityColor(
-                    incident.severity
-                  )}`}
-                >
-                  {incident.severity?.charAt(0).toUpperCase() +
-                    incident.severity?.slice(1)}
-                </span>
-                <div className="px-4 py-2 border-4 rounded-lg border-red-400 text-red-300 font-bold">
-                  Flagged
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold text-white">
-                  {incident.incidentType}
-                </h3>
-                <p className="text-white font-bold text-xl">
-                  ID: #{incident.id}
-                </p>
-              </div>
-
-              <p className="text-gray-300 text-sm mb-2 line-clamp-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
-                {incident.description}
-              </p>
-
-              <p className="text-gray-300 text-sm mb-2">
-                Reported By:{" "}
-                <span className="font-semibold text-white">
-                  {incident.reported_by?.first_name || "Unknown"}{" "}
-                  {incident.reported_by?.last_name || ""}
-                </span>
-              </p>
-
-              <p className="text-gray-300 text-sm mb-2">
-                User Score: {incident.score}
-              </p>
-
-              <div className="flex gap-2 items-center mb-5 ">
-                <p className="text-gray-300 text-sm ">Location:</p>
-                <a
-                  href={incident.maps_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors"
-                >
-                  <MapPin className="text-xl" />
-                </a>
-              </div>
-
-              <div className="flex gap-4 items-center">
-                <Popover>
-                  <PopoverTrigger>
-                    <MessageCircle
-                      title="Contact Authorities"
-                      className="text-white cursor-pointer hover:text-white hover:scale-105 transition-transform text-3xl"
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
-                    <div className="p-4 bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900 w-full h-full">
-                      <h3 className="text-lg font-bold text-white mb-2">
-                        Chat with{" "}
-                        {incident.reported_by?.first_name || "Unknown"}{" "}
-                        {incident.reported_by?.last_name || ""}
-                      </h3>
-                      <p className="text-white mb-4">
-                        Start a conversation to discuss this incident.
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <button className="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition">
-                          Start Chat
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <button
-                className="bg-gray-800 hover:bg-gray-950 text-white px-4 py-2 rounded-lg mt-4 relative bottom-0 right-0 w-full"
-                onClick={() => navigate(`/view-details/${incident.id}`)}
-              >
-                View Details
-              </button>
+        {/* Flagged Incidents */}
+        {flaggedIncidents.length > 0 && (
+          <div className="mb-10 md:mb-14">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-red-500 mb-6 text-center md:text-left">
+              Flagged Incidents
+            </h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {flaggedIncidents.map((incident) => (
+                <IncidentCard key={incident.id} incident={incident} type="flagged" />
+              ))}
             </div>
-          ))}
-        </div> */}
+          </div>
+        )}
+
         <AdminCharts />
       </div>
       <Footer />

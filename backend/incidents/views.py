@@ -40,6 +40,32 @@ from django.db.models.functions import (
     ExtractWeekDay, TruncMonth, 
     ExtractHour, ExtractYear
 )
+import os
+
+# --- RAG Knowledge Base API ---
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+@api_view(["POST"])
+def rag_knowledge_query(request):
+    """
+    Retrieve relevant knowledge base entries for a given query (simple keyword match).
+    POST body: { "query": "..." }
+    """
+    query = request.data.get("query", "").lower()
+    kb_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base", "civic_issues_knowledge.json")
+    try:
+        with open(kb_path, "r", encoding="utf-8") as f:
+            kb = json.load(f)
+    except Exception as e:
+        return Response({"error": f"Knowledge base not found: {e}"}, status=500)
+    if not query:
+        return Response({"error": "No query provided."}, status=400)
+    # Simple keyword search (can be replaced with semantic search)
+    results = [entry for entry in kb if query in entry["topic"].lower() or query in entry["content"].lower()]
+    # If nothing found, return all topics for discoverability
+    if not results:
+        results = kb
+    return Response({"results": results})
 from django.db.models import (
     Avg, Case, Count, F, FloatField, IntegerField, Q, Value, When, ExpressionWrapper, DurationField
 )
@@ -848,14 +874,124 @@ class ChatbotView_Therapist(APIView):
         chat_history = request.data.get("chat_history")
         location = request.data.get("location")
 
-        if not isinstance(chat_history, list):  # Ensure chat_history is a list
+        if not isinstance(chat_history, list):
             chat_history = []
 
         if not user_input:
             return Response({"error": "user_input is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        chain_input = {"user_input": user_input, "chat_history": chat_history, "location": location}
-        response = self.chain.invoke(chain_input)
+        # --- RAG: Extract keywords and match against comprehensive knowledge base ---
+        import os
+        import re
+        kb_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base", "comprehensive_civic_knowledge.json")
+        try:
+            with open(kb_path, "r", encoding="utf-8") as f:
+                kb = json.load(f)
+        except Exception as e:
+            return Response({"error": f"Knowledge base not found: {e}"}, status=500)
+
+        # Extract keywords from user input
+        user_input_lower = user_input.lower()
+        # Remove common words and extract meaningful keywords
+        stop_words = ["how", "to", "do", "i", "can", "you", "please", "help", "me", "with", "about", "for", "in", "on", "at", "the", "a", "an", "is", "are", "was", "were", "have", "has", "had", "will", "would", "could", "should", "my", "your", "our", "their", "what", "where", "when", "why", "who", "which"]
+        words = re.findall(r'\b\w+\b', user_input_lower)
+        keywords = [word for word in words if word not in stop_words and len(word) > 2]
+        
+        # Enhanced keyword matching against comprehensive knowledge base
+        matches = []
+        for entry in kb:
+            # Check both topic and content for keyword matches
+            entry_text = (entry["topic"] + " " + entry["content"]).lower()
+            # Score entries based on number of keyword matches
+            match_score = sum(1 for keyword in keywords if keyword in entry_text)
+            if match_score > 0:
+                matches.append((entry, match_score))
+        
+        # Sort by match score and take top matches
+        matches.sort(key=lambda x: x[1], reverse=True)
+        top_matches = [match[0] for match in matches[:3]]  # Top 3 matches
+        
+        # Comprehensive civic keywords for validation
+        civic_keywords = [
+            "streetlight", "light", "lamp", "electricity", "power", "bulb", "pole",
+            "garbage", "waste", "trash", "bin", "collection", "sanitation", "clean",
+            "pothole", "road", "street", "highway", "repair", "maintenance", "asphalt",
+            "water", "supply", "tap", "pipeline", "pressure", "contamination", "tank",
+            "drain", "sewage", "blockage", "overflow", "manhole", "smell",
+            "noise", "pollution", "loud", "sound", "speaker", "music", "horn",
+            "animal", "stray", "dog", "cat", "cattle", "monkey", "dangerous",
+            "transport", "bus", "train", "metro", "auto", "rickshaw", "delay",
+            "traffic", "signal", "junction", "crossing", "zebra", "parking", "vehicle",
+            "park", "playground", "garden", "swing", "slide", "equipment",
+            "toilet", "restroom", "washroom", "public", "facility", "clean",
+            "footpath", "pavement", "walkway", "broken", "tiles", "accessibility",
+            "building", "construction", "illegal", "unsafe", "permit", "violation",
+            "fire", "safety", "hydrant", "emergency", "extinguisher",
+            "market", "vendor", "food", "hygiene", "illegal", "hawker",
+            "hospital", "health", "medical", "ambulance", "doctor",
+            "school", "education", "teacher", "student", "infrastructure",
+            "bridge", "flyover", "overpass", "structural", "safety",
+            "tree", "pruning", "cutting", "horticulture", "plantation",
+            "civic", "municipal", "corporation", "complaint", "report", "issue", "problem"
+        ]
+        
+        is_civic_related = any(keyword in keywords for keyword in civic_keywords) or any(kw in user_input_lower for kw in civic_keywords)
+        
+        if not is_civic_related:
+            response = "I'm here to help you with civic issues only (streetlights, water supply, garbage collection, potholes, traffic, public transport, health facilities, education, etc.). Please ask a question related to civic issues and I'll provide detailed guidance."
+            chat_history.append(f"User: {user_input}")
+            chat_history.append(f"Bot: {response}")
+            return Response({
+                "user_input": user_input,
+                "bot_response": response,
+                "chat_history": chat_history,
+            }, status=status.HTTP_200_OK)
+
+        # Use Gemini to generate response based on matched knowledge base entries
+        if top_matches:
+            context = "\n".join([f"Topic: {entry['topic']}\nInformation: {entry['content']}" for entry in top_matches])
+            
+            # Create a detailed prompt that considers the type of question being asked
+            prompt = f"""You are a civic issues assistant for India. You must answer the user's specific question using the provided knowledge base context. 
+
+IMPORTANT: Tailor your response to the EXACT question being asked. For example:
+- If asked "How to report X" -> Give step-by-step reporting process with contacts
+- If asked "What is X" or "What are X" -> Explain what X is, causes, effects, and prevention
+- If asked "Why does X happen" -> Explain causes, factors, and prevention methods
+- If asked "Where to report X" -> Focus on specific departments, offices, and contact methods
+- If asked about "problems with X" -> Address common issues and solutions
+
+Knowledge Base Context:
+{context}
+
+User Question: {user_input}
+
+Based on the context above, provide a helpful, detailed answer specific to India. Include practical information like:
+- Relevant department/authority names
+- Helpline numbers (like 1912 for municipal issues)
+- Mobile apps and websites
+- Step-by-step procedures
+- Required documents or information
+
+Make it conversational and easy to understand. Do NOT just repeat the knowledge base content - use it to craft a comprehensive response."""
+            
+            chain_input = {"user_input": prompt, "chat_history": [], "location": location}
+            response = self.chain.invoke(chain_input)
+        else:
+            # Even if no exact matches, try to use Gemini with civic context
+            prompt = f"""You are a civic issues assistant for India. The user is asking about: {user_input}
+
+This seems to be related to civic issues. Please provide helpful information about this topic in the context of Indian civic systems. Include:
+- Which government department or authority handles this
+- How to report or address the issue
+- Relevant helpline numbers (like 1912 for municipal issues)
+- Mobile apps or websites that can help
+- Step-by-step procedures if applicable
+
+Make the response practical and India-specific."""
+            
+            chain_input = {"user_input": prompt, "chat_history": [], "location": location}
+            response = self.chain.invoke(chain_input)
 
         chat_history.append(f"User: {user_input}")
         chat_history.append(f"Bot: {response}")
