@@ -1,12 +1,16 @@
 
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, FlatList, TouchableOpacity, Linking } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, FlatList, TouchableOpacity, Linking, Dimensions, Button } from "react-native";
+import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import axios from "axios";
+import { LineChart, PieChart, BarChart } from "react-native-chart-kit";
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://192.168.1.37:8000";
 
+
 export default function UserDashboard() {
+  const router = useRouter();
   const [incidents, setIncidents] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [resolved, setResolved] = useState(0);
@@ -17,6 +21,8 @@ export default function UserDashboard() {
   const [severityFilter, setSeverityFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [expandedId, setExpandedId] = useState<number|null>(null);
+  const [chartData, setChartData] = useState<{ labels: string[]; data: number[] }>({ labels: [], data: [] });
+  const [allChartData, setAllChartData] = useState<any>({});
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -44,7 +50,33 @@ export default function UserDashboard() {
         setLoading(false);
       }
     };
+    const fetchChartStats = async () => {
+      try {
+        const token = await (await import("@react-native-async-storage/async-storage")).default.getItem("accessToken");
+        const response = await axios.get(`${API_BASE_URL}/api/incident-chart-user/`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        console.log("Chart API response:", response.data); // Debug log
+        setAllChartData(response.data);
+        // Monthly trend for main chart
+        if (response.data.monthly_trend && Array.isArray(response.data.monthly_trend)) {
+          const labels = response.data.monthly_trend.map((item: any) => {
+            const d = new Date(item.month);
+            return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+          });
+          const data = response.data.monthly_trend.map((item: any) => item.count || 0);
+          setChartData({ labels, data });
+        } else {
+          setChartData({ labels: [], data: [] });
+        }
+      } catch (err) {
+        setChartData({ labels: [], data: [] });
+        setAllChartData({});
+        console.error("Chart API error:", err);
+      }
+    };
     fetchIncidents();
+    fetchChartStats();
   }, []);
 
   if (loading) {
@@ -80,6 +112,17 @@ export default function UserDashboard() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Your Dashboard</Text>
+
+      {/* Chatbot Button */}
+      <View style={{ alignItems: 'center', marginBottom: 12 }}>
+        <TouchableOpacity
+          style={{ backgroundColor: '#0bf', paddingVertical: 10, paddingHorizontal: 28, borderRadius: 10 }}
+          onPress={() => router.push('../ChatBotScreen')}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Open Chatbot</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Dashboard Stats Cards - now vertical */}
 
       {/* Dashboard Stats Cards - now vertical */}
       <View style={{ marginBottom: 18 }}>
@@ -157,7 +200,6 @@ export default function UserDashboard() {
             let mapsUrl = "";
             if (typeof incident.location === "string") {
               locationStr = incident.location;
-              // Try to parse lat/lon from string if possible
               const match = locationStr.match(/([\d.-]+)[, ]+([\d.-]+)/);
               if (match) {
                 mapsUrl = `https://www.google.com/maps?q=${match[1]},${match[2]}`;
@@ -198,6 +240,148 @@ export default function UserDashboard() {
               </TouchableOpacity>
             );
           })
+        )}
+      </View>
+
+      {/* --- All Charts Section (at the end) --- */}
+      <View style={{ marginBottom: 24 }}>
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#0b2340', marginBottom: 12, textAlign: 'center' }}>Analytics & Trends</Text>
+
+        {/* Incident Trend Bar Chart */}
+        {allChartData.monthly_trend && allChartData.monthly_trend.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Incident Trend (Monthly)</Text>
+            <BarChart
+              data={{
+                labels: allChartData.monthly_trend.map((item: any) => {
+                  const d = new Date(item.month);
+                  return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+                }),
+                datasets: [{ data: allChartData.monthly_trend.map((item: any) => item.count || 0) }],
+              }}
+              width={Dimensions.get("window").width - 48}
+              height={180}
+              yAxisLabel=""
+              yAxisSuffix=""
+              chartConfig={{
+                backgroundColor: "#fff",
+                backgroundGradientFrom: "#e3f0ff",
+                backgroundGradientTo: "#f5f8ff",
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(11, 35, 64, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(11, 35, 64, ${opacity})`,
+                style: { borderRadius: 16 },
+              }}
+              style={{ marginVertical: 8, borderRadius: 12 }}
+            />
+          </View>
+        )}
+
+        {/* Score Trend Line Chart */}
+        {allChartData.score_trend && allChartData.score_trend.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Score Trend</Text>
+            <LineChart
+              data={{
+                labels: allChartData.score_trend.map((item: any) => {
+                  const d = new Date(item.month);
+                  return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+                }),
+                datasets: [{ data: allChartData.score_trend.map((item: any) => item.avg_score || 0) }],
+              }}
+              width={Dimensions.get("window").width - 48}
+              height={180}
+              yAxisLabel=""
+              yAxisSuffix=""
+              chartConfig={{
+                backgroundColor: "#fff",
+                backgroundGradientFrom: "#e3f0ff",
+                backgroundGradientTo: "#f5f8ff",
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(11, 35, 64, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(11, 35, 64, ${opacity})`,
+                style: { borderRadius: 16 },
+                propsForDots: { r: "5", strokeWidth: "2", stroke: "#0bf" },
+              }}
+              bezier
+              style={{ marginVertical: 8, borderRadius: 12 }}
+            />
+          </View>
+        )}
+
+        {/* Incident Type Distribution Pie Chart */}
+        {allChartData.incident_types && allChartData.incident_types.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Incident Type Distribution</Text>
+            <PieChart
+              data={allChartData.incident_types.map((item: any, idx: number) => ({
+                name: item.incidentType,
+                count: item.count,
+                color: ["#0bf", "#4ade80", "#fde047", "#ff5252", "#0b2340", "#888"][idx % 6],
+                legendFontColor: "#0b2340",
+                legendFontSize: 14,
+              }))}
+              width={Dimensions.get("window").width - 48}
+              height={180}
+              chartConfig={{
+                color: () => `#0b2340`,
+              }}
+              accessor="count"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+            />
+          </View>
+        )}
+
+        {/* Severity Distribution Pie Chart */}
+        {allChartData.severity_distribution && allChartData.severity_distribution.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Severity Distribution</Text>
+            <PieChart
+              data={allChartData.severity_distribution.map((item: any, idx: number) => ({
+                name: item.severity,
+                count: item.count,
+                color: ["#4ade80", "#fde047", "#ff5252", "#0bf", "#0b2340", "#888"][idx % 6],
+                legendFontColor: "#0b2340",
+                legendFontSize: 14,
+              }))}
+              width={Dimensions.get("window").width - 48}
+              height={180}
+              chartConfig={{
+                color: () => `#0b2340`,
+              }}
+              accessor="count"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+            />
+          </View>
+        )}
+
+        {/* Status Distribution Pie Chart */}
+        {allChartData.status_distribution && allChartData.status_distribution.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Status Distribution</Text>
+            <PieChart
+              data={allChartData.status_distribution.map((item: any, idx: number) => ({
+                name: item.status,
+                count: item.count,
+                color: ["#fde047", "#4ade80", "#ff5252", "#0bf", "#0b2340", "#888"][idx % 6],
+                legendFontColor: "#0b2340",
+                legendFontSize: 14,
+              }))}
+              width={Dimensions.get("window").width - 48}
+              height={180}
+              chartConfig={{
+                color: () => `#0b2340`,
+              }}
+              accessor="count"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute
+            />
+          </View>
         )}
       </View>
     </ScrollView>
