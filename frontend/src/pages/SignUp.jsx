@@ -8,14 +8,17 @@ import {
   Button,
   Grid,
   Divider,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import Footer from "../components/Footer";
 import { useNavigate, Link } from "react-router-dom";
-import ScaleInComponent from "@/lib/ScaleInComponent";
-// import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,17 +26,13 @@ const SignUp = () => {
     phoneNumber: "",
     address: "",
     aadharNumber: "",
-    emergencyContact1: "",
-    emergencyContact2: "",
     password: "",
   });
 
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const API_HOST = import.meta.env.VITE_API_HOST;
   const API_URL = import.meta.env.VITE_API_URL;
-  // const { isLoggedIn, login, logout } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -70,7 +69,7 @@ const SignUp = () => {
         formData
       );
       if (response.status === 201) {
-        setMessage("User created successfully!");
+        setMessage("Account created successfully!");
         setFormData({
           firstName: "",
           lastName: "",
@@ -78,11 +77,8 @@ const SignUp = () => {
           phoneNumber: "",
           address: "",
           aadharNumber: "",
-          emergencyContact1: "",
-          emergencyContact2: "",
           password: "",
         });
-        // login();
         navigate("/login");
       }
     } catch (err) {
@@ -98,236 +94,250 @@ const SignUp = () => {
 
   return (
     <>
-      <ScaleInComponent>
-        <Container
-          maxWidth={false}
-          disableGutters
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{
+          minHeight: "85vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: isMobile ? "20px 0px" : "44px 0px",
+          background: "linear-gradient(135deg, #0c2461 0%, #1e3799 30%, #0c2461 100%)",
+          position: "relative",
+          overflow: "hidden",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\" opacity=\"0.1\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"none\" stroke=\"%23ffffff\" stroke-width=\"2\"/><path d=\"M50,10 A40,40 0 1,1 50,90 A40,40 0 1,1 50,10 Z\" fill=\"none\" stroke=\"%23ffffff\" stroke-width=\"1\"/><line x1=\"50\" y1=\"10\" x2=\"50\" y2=\"50\" stroke=\"%23ffffff\" stroke-width=\"1\"/><line x1=\"50\" y1=\"50\" x2=\"75\" y2=\"65\" stroke=\"%23ffffff\" stroke-width=\"1\"/></svg>')",
+            opacity: 0.1,
+            zIndex: 0,
+          },
+        }}
+      >
+        <Box
           sx={{
-            minHeight: "85vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding:"44px 0px",
-            background:
-              "url('https://preview.redd.it/dark-magical-forest-desktop-wallpaper-3840x2160-v0-gtjs6enuckjd1.jpeg?auto=webp&s=29ecf260c86d42345270b3ddd35c9ba9ea7e14f4') no-repeat center center fixed",
-            backgroundSize: "cover",
+            width: isMobile ? "90%" : "700px",
+            mx: "auto",
+            textAlign: "center",
+            padding: isMobile ? 3 : 4,
+            borderRadius: 2,
+            backdropFilter: "blur(10px)",
+            backgroundColor: "rgba(25, 25, 35, 0.7)",
+            boxShadow: `
+              8px 8px 16px rgba(0, 0, 0, 0.5),
+              -4px -4px 10px rgba(255, 255, 255, 0.05),
+              0 0 20px rgba(56, 103, 214, 0.5)
+            `,
+            border: "1px solid rgba(255, 255, 255, 0.1)",
             position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              background:
-                "url('https://preview.redd.it/dark-magical-forest-desktop-wallpaper-3840x2160-v0-gtjs6enuckjd1.jpeg?auto=webp&s=29ecf260c86d42345270b3ddd35c9ba9ea7e14f4') no-repeat center center fixed",
-              backgroundSize: "cover",
-              opacity: 0.3,
-              zIndex: -1,
-            },
+            zIndex: 1,
           }}
         >
-          <Box
+          <Typography
+            variant={isMobile ? "h5" : "h4"}
             sx={{
-              maxWidth: 700,
-              mx: "auto",
-              textAlign: "center",
-              padding: 4,
-              borderRadius: 4,
-              backdropFilter: "blur(15px)",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              boxShadow: `
-                8px 8px 16px rgba(0, 0, 0, 0.6),
-                -8px -8px 16px rgba(255, 255, 255, 0.05),
-                0 0 15px rgba(0, 191, 255, 0.5)
-              `,
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              fontWeight: "bold",
+              color: "#fff",
+              mb: 2,
+              fontFamily: "'Roboto', sans-serif",
+              textShadow: "0 0 10px rgba(255, 255, 255, 0.5)",
             }}
           >
+            CivicConnect
+          </Typography>
+          
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              color: "#bbb", 
+              mb: 3,
+              fontSize: isMobile ? "0.9rem" : "1rem"
+            }}
+          >
+            Join our community issue reporting platform
+          </Typography>
+          
+          <Divider sx={{ mb: 4, borderColor: "#555", width: isMobile ? "80%" : "50%", mx: "auto" }} />
+          
+          {message && (
             <Typography
-              variant="h4"
-              sx={{
-                fontWeight: "bold",
-                color: "#fff",
-                mb: 4,
-                fontFamily: "'Smooch Sans', sans-serif",
-                letterSpacing: 1,
-                textShadow: "0 0 10px rgba(0, 191, 255, 0.8)",
-              }}
+              sx={{ color: "#4cd964", mb: 2, fontWeight: "medium" }}
+              variant="body1"
             >
-              Create Your Account
+              {message}
             </Typography>
-            <Divider
-              sx={{ mb: 4, borderColor: "#bbb", width: "50px", mx: "auto" }}
-            />
-            {message && (
-              <Typography
-                sx={{ color: "#0bf", mb: 2, fontWeight: "bold" }}
-                variant="body1"
-              >
-                {message}
-              </Typography>
-            )}
+          )}
 
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                {[
-                  { label: "First Name", name: "firstName" },
-                  { label: "Last Name", name: "lastName" },
-                  { label: "Email", name: "email", type: "email" },
-                  { label: "Phone Number", name: "phoneNumber", type: "tel" },
-                  {
-                    label: "Address",
-                    name: "address",
-                    multiline: true,
-                    rows: 3,
-                  },
-                  { label: "Aadhar Number", name: "aadharNumber" },
-                  {
-                    label: "Emergency Contact 1",
-                    name: "emergencyContact1",
-                    type: "tel",
-                  },
-                  {
-                    label: "Emergency Contact 2",
-                    name: "emergencyContact2",
-                    type: "tel",
-                  },
-                  {
-                    label: "Create Password",
-                    name: "password",
-                    type: "password",
-                  },
-                ].map((field, index) => (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={field.name.includes("Name") ? 6 : 12}
-                    key={index}
-                  >
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      fullWidth
-                      value={formData[field.name]}
-                      onChange={handleChange}
-                      error={!!errors[field.name]}
-                      helperText={errors[field.name]}
-                      sx={{
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        borderRadius: 2,
-                        input: {
-                          color: "#fff",
-                          "&::placeholder": {
-                            color: "#bbb",
-                            opacity: 1,
-                          },
-                        },
-                        boxShadow:
-                          "inset 3px 3px 6px rgba(0, 0, 0, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.05)",
-                      }}
-                      InputLabelProps={{
-                        sx: { color: "#bbb" },
-                      }}
-                    />
-                  </Grid>
-                ))}
-                <Grid item xs={12}>
-                  <Button
-                    type="submit"
-                    variant="contained"
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={isMobile ? 2 : 3}>
+              {[
+                { label: "First Name", name: "firstName" },
+                { label: "Last Name", name: "lastName" },
+                { label: "Email", name: "email", type: "email" },
+                { label: "Phone Number", name: "phoneNumber", type: "tel" },
+                {
+                  label: "Address",
+                  name: "address",
+                  multiline: true,
+                  rows: 2,
+                },
+                { label: "Aadhar Number", name: "aadharNumber" },
+                {
+                  label: "Create Password",
+                  name: "password",
+                  type: "password",
+                },
+              ].map((field, index) => (
+                <Grid
+                  item
+                  xs={12}
+                  sm={field.name.includes("Name") ? 6 : 12}
+                  key={index}
+                >
+                  <TextField
+                    {...field}
+                    variant="outlined"
                     fullWidth
+                    size={isMobile ? "small" : "medium"}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name]}
                     sx={{
-                      backgroundColor: "#222",
-                      color: "#fff",
-                      padding: "12px 20px",
-                      borderRadius: "10px",
-                      boxShadow: `
-                        5px 5px 15px rgba(0, 0, 0, 0.7),
-                        -5px -5px 15px rgba(255, 255, 255, 0.05),
-                        0 0 10px rgba(0, 191, 255, 0.8)
-                      `,
-                      "&:hover": {
-                        backgroundColor: "#333",
-                        boxShadow: `
-                          0 0 10px rgba(0, 191, 255, 0.8),
-                          0 0 20px rgba(0, 191, 255, 0.6)
-                        `,
+                      backgroundColor: "rgba(0, 0, 0, 0.2)",
+                      borderRadius: 1,
+                      input: {
+                        color: "#fff",
+                        padding: isMobile ? "12px 14px" : "16px 14px",
+                        "&::placeholder": {
+                          color: "#bbb",
+                          opacity: 1,
+                        },
+                      },
+                      textarea: {
+                        color: "#fff",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#555",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#3498db",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#3498db",
+                          boxShadow: "0 0 0 2px rgba(52, 152, 219, 0.2)",
+                        },
+                      },
+                      boxShadow: "inset 3px 3px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.05)",
+                    }}
+                    InputLabelProps={{
+                      sx: { 
+                        color: "#bbb",
+                        "&.Mui-focused": {
+                          color: "#3498db",
+                        }
                       },
                     }}
-                  >
-                    Sign Up
-                  </Button>
-                  {error && (
-                    <Typography
-                      sx={{ mt: 2, fontSize: "0.9rem", color: "red" }}
-                    >
-                      {error}
-                    </Typography>
-                  )}
-
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      mt: 2,
-                      color: "#bbb",
-                      fontSize: "1rem",
-                      textAlign: "center",
-                      letterSpacing: "0.5px",
+                    FormHelperTextProps={{
+                      sx: {
+                        color: "#ff6b6b",
+                        marginLeft: 0,
+                        fontSize: "0.75rem",
+                      }
                     }}
-                  >
-                    Already have an account?{" "}
-                    <Link
-                      to="/login"
-                      style={{
-                        color: "#0bf",
-                        fontWeight: "bold",
-                        textDecoration: "none",
-                        position: "relative",
-                        transition: "color 0.3s ease-in-out",
-                      }}
-                      onMouseEnter={(e) => (e.target.style.color = "#00ffff")}
-                      onMouseLeave={(e) => (e.target.style.color = "#0bf")}
-                    >
-                      Log in
-                      <span
-                        style={{
-                          position: "absolute",
-                          bottom: "-2px",
-                          left: 0,
-                          width: "100%",
-                          height: "2px",
-                          background: "linear-gradient(90deg, #0bf, #00ffff)",
-                          transition: "transform 0.3s ease-in-out",
-                          transform: "scaleX(0)",
-                          transformOrigin: "right",
-                        }}
-                        className="login-underline"
-                      ></span>
-                    </Link>
-                  </Typography>
-
-                  <style>
-                    {`
-                      .login-underline {
-                        display: block;
-                      }
-                      a:hover .login-underline {
-                        transform: scaleX(1);
-                        transform-origin: left;
-                      }
-                    `}
-                  </style>
+                  />
                 </Grid>
+              ))}
+              
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  size={isMobile ? "medium" : "large"}
+                  sx={{
+                    backgroundColor: "#2980b9",
+                    color: "#fff",
+                    padding: isMobile ? "10px" : "14px 20px",
+                    borderRadius: 1,
+                    fontWeight: "bold",
+                    textTransform: "none",
+                    fontSize: isMobile ? "0.9rem" : "1rem",
+                    boxShadow: `
+                      5px 5px 15px rgba(0, 0, 0, 0.5),
+                      -3px -3px 10px rgba(255, 255, 255, 0.05),
+                      0 0 10px rgba(41, 128, 185, 0.5)
+                    `,
+                    "&:hover": {
+                      backgroundColor: "#3498db",
+                      boxShadow: `
+                        0 0 15px rgba(41, 128, 185, 0.8),
+                        0 0 25px rgba(41, 128, 185, 0.4)
+                      `,
+                    },
+                    transition: "all 0.2s ease-in-out",
+                  }}
+                >
+                  Create Account
+                </Button>
+                
+                {error && (
+                  <Typography
+                    sx={{ mt: 2, fontSize: "0.9rem", color: "#ff6b6b" }}
+                  >
+                    {error}
+                  </Typography>
+                )}
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 3,
+                    color: "#bbb",
+                    fontSize: isMobile ? "0.9rem" : "1rem",
+                    textAlign: "center",
+                  }}
+                >
+                  Already have an account?{" "}
+                  <Link
+                    to="/login"
+                    style={{
+                      color: "#3498db",
+                      fontWeight: "bold",
+                      textDecoration: "none",
+                      position: "relative",
+                    }}
+                    onMouseEnter={(e) => (e.target.style.color = "#5dade2")}
+                    onMouseLeave={(e) => (e.target.style.color = "#3498db")}
+                  >
+                    Sign in
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: "-2px",
+                        left: 0,
+                        width: "100%",
+                        height: "1px",
+                        backgroundColor: "#3498db",
+                        transform: "scaleX(0)",
+                        transition: "transform 0.3s ease-in-out",
+                      }}
+                    ></span>
+                  </Link>
+                </Typography>
               </Grid>
-            </form>
-          </Box>
-        </Container>
-      </ScaleInComponent>
+            </Grid>
+          </form>
+        </Box>
+      </Container>
       <Footer />
     </>
   );
 };
-
 export default SignUp;
