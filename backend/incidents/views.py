@@ -320,6 +320,8 @@ class form_report(APIView):
 
     def find_similar_incident(self, data, lat, lon):
         """Check for existing similar incidents within 50 meters & 1 hour"""
+        from django.utils.dateparse import parse_datetime
+        import datetime
         recent_incidents = Incidents.objects.filter(incidentType=data.get("incidentType"))
         for incident in recent_incidents:
             incident_location = incident.location
@@ -328,10 +330,23 @@ class form_report(APIView):
                     incident_location = json.loads(incident_location)
                 except json.JSONDecodeError:
                     continue
-                    
             if great_circle((lat, lon), (incident_location["latitude"], incident_location["longitude"])).meters <= 50:
                 print("Under 50 metres")
-                if abs(data.get("reported_at", timezone.now()) - incident.reported_at) <= timedelta(hours=1):
+                reported_at = data.get("reported_at", None)
+                # Convert reported_at to Python datetime
+                if isinstance(reported_at, str):
+                    dt = parse_datetime(reported_at)
+                    if dt is None:
+                        try:
+                            dt = datetime.datetime.fromtimestamp(float(reported_at) / 1000, tz=timezone.utc)
+                        except Exception:
+                            dt = timezone.now()
+                    reported_at = dt
+                elif isinstance(reported_at, (int, float)):
+                    reported_at = datetime.datetime.fromtimestamp(reported_at / 1000, tz=timezone.utc)
+                if not reported_at:
+                    reported_at = timezone.now()
+                if abs(reported_at - incident.reported_at) <= timedelta(hours=1):
                     print("Under 1 hour")
                     if self.is_similar_incident(data["description"], incident.description):
                         return incident
