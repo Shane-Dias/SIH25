@@ -50,7 +50,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 model = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 api_key="AIzaSyDLoq6B6LqlzqVH4umeSak-fOMIHiXAWOA",
                 max_retries=3,
                 retry_wait_strategy=wait_exponential(multiplier=1, min=4, max=10)
