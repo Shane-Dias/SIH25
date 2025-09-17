@@ -20,6 +20,7 @@ const PhotoList = () => {
       if (response.ok) {
         const data = await response.json();
         setPhotos(data);
+        console.log(data)
       } else {
         setError('Failed to fetch photos');
       }
