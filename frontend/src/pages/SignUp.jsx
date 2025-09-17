@@ -18,7 +18,6 @@ const SignUp = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -291,5 +290,4 @@ const SignUp = () => {
     </>
   );
 };
-
 export default SignUp;

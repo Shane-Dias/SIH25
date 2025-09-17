@@ -199,10 +199,10 @@ const VoiceInput = () => {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-black p-6  ">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-black p-1 ">
         <div className="max-w-2xl mx-auto border border-cyan-500  ">
           {/* Main Card */}
-          <div className="max-w-2xl p-8 mx-auto border bg-gray-900 border-cyan-500 shadow-[0_0_15px_#00ffff] transition-all duration-300 hover:shadow-[0_0_25px_#00ffff]">
+          <div className="max-w-2xl p-8 mx-auto border bg-gray-900 border-cyan-500  duration-300 hover:shadow-[0_0_25px_#00ffff]">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center gap-3 mb-4">
