@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineReport, MdReport } from "react-icons/md";
 import AdminCharts from "./chart";
+import PhotoList from "./PhotoList";
 
 const AdminDashboard = () => {
   const [total, setTotal] = useState(0);
@@ -518,6 +519,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        <PhotoList />
         <AdminCharts />
       </div>
       <Footer />
