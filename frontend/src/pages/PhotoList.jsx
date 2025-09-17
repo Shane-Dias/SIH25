@@ -75,7 +75,7 @@ const PhotoList = () => {
           className="text-center mb-10"
         >
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent mb-4 drop-shadow-[0_0_10px_cyan]">
-            Your Photo Gallery
+            Photo Gallery
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
             Explore your uploaded photos and experience them in immersive VR environments.

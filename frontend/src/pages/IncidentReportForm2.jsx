@@ -140,7 +140,7 @@ const IncidentReportForm = () => {
 
     try {
       const API_HOST = import.meta.env.VITE_API_HOST;
-  const API_URL = import.meta.env.VITE_API_URL;
+      const API_URL = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem("accessToken"); // Retrieve token from storage or context
 
       const response = await axios.post(
@@ -185,14 +185,14 @@ const IncidentReportForm = () => {
   };
 
   return (
-  <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-black">
       <SimpleModal
         open={offlineModalOpen}
         handleClose={handleModalClose}
         message="You are offline. Your report has been saved and will be submitted automatically when you are back online."
       />
 
-  <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-12">
+      <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-12">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -203,7 +203,8 @@ const IncidentReportForm = () => {
             Report an Incident
           </h1>
           <p className="text-gray-400 text-sm sm:text-lg max-w-lg sm:max-w-2xl mx-auto">
-            Help us maintain safety and security by reporting incidents. Your information will be handled with utmost confidentiality.
+            Help us maintain safety and security by reporting incidents. Your
+            information will be handled with utmost confidentiality.
           </p>
         </motion.div>
 
@@ -228,10 +229,30 @@ const IncidentReportForm = () => {
                   className="w-full bg-slate-800 text-gray-100 px-3 py-2 sm:px-4 sm:py-3 rounded-xl border border-slate-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] transition-all duration-200 text-sm sm:text-base"
                 >
                   <option value="">Select an incident type</option>
-                  <option value="Pothole/Road Damage">Pothole/Road Damage</option>
+                  <option value="Pothole/Road Damage">
+                    Pothole/Road Damage
+                  </option>
                   <option value="Water Pipe Burst">Water Pipe Burst</option>
-                  <option value="Overflowing Trash Bins">Overflowing Trash Bins</option>
+                  <option value="Overflowing Trash Bins">
+                    Overflowing Trash Bins
+                  </option>
                   <option value="Illegal Dumping">Illegal Dumping</option>
+                  <option value="Broken streetlights / lack of lighting">
+                    Broken streetlights / lack of lighting
+                  </option>
+                  <option value="Voltage fluctuations in homes">
+                    Voltage fluctuations in homes
+                  </option>
+                  <option value="Traffic signal not working">
+                    Traffic signal not working
+                  </option>
+                  <option value="Overcrowded buses / irregular transport">
+                    Overcrowded buses / irregular transport
+                  </option>
+                  <option value="Stray dogs / cattle on roads">
+                    Stray dogs / cattle on roads
+                  </option>
+                  {/* 
                   <option value="Domestic Violence">Domestic Violence</option>
                   <option value="Child Abuse">Child Abuse</option>
                   <option value="Sexual Harassment">Sexual Harassment</option>
@@ -241,6 +262,7 @@ const IncidentReportForm = () => {
                   <option value="Accident">Accident</option>
                   <option value="Theft">Theft</option>
                   <option value="Medical Emergency">Medical Emergency</option>
+                  */}
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -339,7 +361,9 @@ const IncidentReportForm = () => {
                           className="sr-only"
                         />
                       </label>
-                      <span className="hidden sm:inline pl-1">or drag and drop</span>
+                      <span className="hidden sm:inline pl-1">
+                        or drag and drop
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500">
                       PNG, JPG, PDF up to 10MB

@@ -373,10 +373,15 @@ class form_report(APIView):
         """Assigns nearest police, fire, and hospital stations to the incident"""
 
         station_map = {
-            'Pothole/Road Damage': [PoliceStations, MunicipalCorporation],
-            'Water Pipe Burst': [PoliceStations, MunicipalCorporation],
-            'Overflowing Trash Bins': [PoliceStations, MunicipalCorporation],
+            'Pothole/Road Damage': [MunicipalCorporation],
+            'Water Pipe Burst': [MunicipalCorporation],
+            'Overflowing Trash Bins': [MunicipalCorporation],
             'Illegal Dumping': [PoliceStations, MunicipalCorporation],
+            'Broken streetlights / lack of lighting': [MunicipalCorporation],
+            'Voltage fluctuations in homes': [MunicipalCorporation],
+            'Traffic signal not working': [PoliceStations, MunicipalCorporation],
+            'Overcrowded buses / irregular transport' : [MunicipalCorporation],
+            'Stray dogs / cattle on roads': [MunicipalCorporation],
             'Domestic Violence': [PoliceStations],
             'Child Abuse': [PoliceStations],
             'Sexual Harassment': [PoliceStations],
@@ -387,7 +392,7 @@ class form_report(APIView):
             'Accident': [PoliceStations, Hospital],
             'Missing Persons': [PoliceStations],
             'Medical Emergency': [Hospital],
-            'Other': [PoliceStations]  
+            'Other': [PoliceStations, MunicipalCorporation]  
         }
 
         station_models = station_map.get(incident.incidentType, [])
@@ -533,10 +538,15 @@ class voicereport(APIView):
 
         # Nearest stations lookup
         station_map = {
-            'Pothole/Road Damage': [PoliceStations, MunicipalCorporation],
-            'Water Pipe Burst': [PoliceStations, MunicipalCorporation],
-            'Overflowing Trash Bins': [PoliceStations, MunicipalCorporation],
+            'Pothole/Road Damage': [MunicipalCorporation],
+            'Water Pipe Burst': [MunicipalCorporation],
+            'Overflowing Trash Bins': [MunicipalCorporation],
             'Illegal Dumping': [PoliceStations, MunicipalCorporation],
+            'Broken streetlights / lack of lighting': [MunicipalCorporation],
+            'Voltage fluctuations in homes': [MunicipalCorporation],
+            'Traffic signal not working': [PoliceStations, MunicipalCorporation],
+            'Overcrowded buses / irregular transport' : [MunicipalCorporation],
+            'Stray dogs / cattle on roads': [MunicipalCorporation],
             'Domestic Violence': [PoliceStations],
             'Child Abuse': [PoliceStations],
             'Sexual Harassment': [PoliceStations],

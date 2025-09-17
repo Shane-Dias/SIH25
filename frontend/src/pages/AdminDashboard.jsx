@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineReport, MdReport } from "react-icons/md";
 import AdminCharts from "./chart";
+import PhotoList from "./PhotoList";
 
 const AdminDashboard = () => {
   const [total, setTotal] = useState(0);
@@ -362,11 +363,14 @@ const AdminDashboard = () => {
                       <p className="text-white mb-4 text-sm">
                         Start a conversation to discuss this incident.
                       </p>
-                      <div className="flex justify-end">
-                        <button className="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition text-sm">
-                          Start Chat
-                        </button>
-                      </div>
+                     <div className="flex justify-end">
+  <button 
+    className="px-4 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition text-sm"
+    onClick={() => navigate('/chat')}
+  >
+    Start Chat
+  </button>
+</div>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -518,6 +522,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        <PhotoList />
         <AdminCharts />
       </div>
       <Footer />

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'photos',
+    'chat',
 ]
 
 MIDDLEWARE = [
