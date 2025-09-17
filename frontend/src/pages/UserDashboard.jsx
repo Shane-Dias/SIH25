@@ -280,9 +280,12 @@ const UserDashboard = () => {
                         <td className="p-4">
                           <Popover>
                             <PopoverTrigger>
-                              <button className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors">
-                                <MessageCircle className="text-xl" />
-                              </button>
+                             <button 
+  className="inline-flex items-center text-sky-400 hover:text-sky-300 transition-colors"
+  onClick={() => navigate('/chat')}
+>
+  <MessageCircle className="text-xl" />
+</button>
                             </PopoverTrigger>
                             <PopoverContent className="bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
                               <div className="p-4 bg-transparent rounded-xl border border-white/20">
