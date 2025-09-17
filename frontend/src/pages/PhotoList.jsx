@@ -7,6 +7,8 @@ const PhotoList = () => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     fetchPhotos();
@@ -14,7 +16,7 @@ const PhotoList = () => {
 
   const fetchPhotos = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/photos/');
+      const response = await fetch(`${API_URL}/api/photos/`);
       if (response.ok) {
         const data = await response.json();
         setPhotos(data);

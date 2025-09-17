@@ -279,11 +279,12 @@ const IncidentReportForm = () => {
     }
 
     try {
+      const API_HOST = import.meta.env.VITE_API_HOST;
+      const API_URL = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem("accessToken"); // Retrieve token from storage or context
-      const API_HOST = process.env.REACT_APP_API_HOST;
-      const API_PORT = process.env.REACT_APP_API_PORT;
+      
       const response = await axios.post(
-        `http://${API_HOST}:${API_PORT}/api/report-incident/`,
+        `${API_URL}/api/report-incident/`,
         formDataToSend,
         {
           headers: {

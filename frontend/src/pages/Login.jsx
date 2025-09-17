@@ -17,6 +17,8 @@ import { useNavigate, Link } from "react-router-dom";
 import ScaleInComponent from "@/lib/ScaleInComponent";
 
 const Login = () => {
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -48,7 +50,7 @@ const Login = () => {
   const handleLogin = async () => {
     if (validate()) {
       try {
-        const response = await axios.post("http://127.0.0.1:8000/api/login/", {
+        const response = await axios.post(`${API_URL}/api/login/`, {
           email: formData.email,
           password: formData.password,
         });

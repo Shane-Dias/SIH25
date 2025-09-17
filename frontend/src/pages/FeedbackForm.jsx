@@ -9,6 +9,8 @@ const FeedbackForm = () => {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ const FeedbackForm = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/submit-feedback/", {
+      const response = await fetch(`${API_URL}/submit-feedback/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

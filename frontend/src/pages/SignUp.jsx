@@ -31,6 +31,8 @@ const SignUp = () => {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
   // const { isLoggedIn, login, logout } = useAuth();
 
   const handleChange = (e) => {
@@ -64,7 +66,7 @@ const SignUp = () => {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/signup/",
+        `${API_URL}/api/signup/`,
         formData
       );
       if (response.status === 201) {

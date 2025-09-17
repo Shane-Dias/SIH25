@@ -28,11 +28,14 @@ const AdminDashboard = () => {
   const [falseReport, setFalseReport] = useState([{}]);
   const [flaggedIncidents, setFlaggedIncidents] = useState([]);
 
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const token = localStorage.getItem("accessToken");
   const getincidents = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/all_station_incidents/",
+        `${API_URL}/api/all_station_incidents/`,
         {
           method: "GET",
           headers: {

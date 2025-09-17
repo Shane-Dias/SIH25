@@ -33,6 +33,8 @@ const RecentIncidents = () => {
   const [error, setError] = useState(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const { isLoggedIn } = useAuth();
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Refs for map and data
   const mapRef = useRef(null);
@@ -97,7 +99,7 @@ const RecentIncidents = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          "http://127.0.0.1:8000/api/latest-incidents/"
+          `${API_URL}/api/latest-incidents/`
         );
 
         if (response.status === 200) {

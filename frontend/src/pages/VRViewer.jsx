@@ -15,6 +15,8 @@ const VRViewer = () => {
   const [error, setError] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     fetchPhoto();
@@ -35,7 +37,7 @@ const VRViewer = () => {
 
   const fetchPhoto = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/photos/${photoId}/`);
+      const response = await fetch(`${API_URL}/api/photos/${photoId}/`);
       if (response.ok) {
         const data = await response.json();
         setPhoto(data);

@@ -12,6 +12,8 @@ const UploadPage = () => {
   const [stream, setStream] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleFileSelect = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -34,7 +36,7 @@ const UploadPage = () => {
     formData.append('title', title);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/photos/', {
+      const response = await fetch(`${API_URL}/api/photos/`, {
         method: 'POST',
         body: formData,
       });

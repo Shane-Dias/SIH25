@@ -9,12 +9,14 @@ const ViewDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [fullDetails, setFullDetails] = useState(null);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchIncidentDetails = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/incident/${id}/`,
+          `${API_URL}/api/incident/${id}/`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },

@@ -34,6 +34,8 @@ const RecentIncidents = () => {
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const { isLoggedIn } = useAuth();
   const [currentFilter, setCurrentFilter] = useState(null);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Add reset filter function
   const resetFilters = () => {
@@ -108,7 +110,7 @@ const RecentIncidents = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          "http://127.0.0.1:8000/api/latest-incidents/"
+          `${API_URL}/api/latest-incidents/`
         );
 
         if (response.status === 200) {

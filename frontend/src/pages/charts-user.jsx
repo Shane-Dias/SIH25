@@ -34,6 +34,8 @@ const IncidentDashboardUser = () => {
   });
   const [timeRange, setTimeRange] = useState(30);
   const [loading, setLoading] = useState(true);
+  const API_HOST = import.meta.env.VITE_API_HOST;
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -41,7 +43,7 @@ const IncidentDashboardUser = () => {
         const token = localStorage.getItem("accessToken");
         setLoading(true);
         const response = await fetch(
-          "http://127.0.0.1:8000/api/incident-chart-user/",
+          `${API_URL}/api/incident-chart-user/`,
           {
             method: "GET",
             headers: {
