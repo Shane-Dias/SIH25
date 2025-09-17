@@ -28,6 +28,7 @@ import UserProfile from "./pages/UserProfile";
 import VRViewer from "./pages/VRViewer";
 import UploadPage from "./pages/UploadPage";
 import PhotoList from "./pages/PhotoList";
+import Chat from "./pages/Chat";
 import { LocationProvider } from "../src/context/LocationContext";
 
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
@@ -77,6 +78,7 @@ const App = () => {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/photos" element={<PhotoList />} />
+                <Route path="/chat" element={<Chat />} />
                 <Route path="/vr/:photoId" element={<VRViewer />} />
                 <Route path="/About" element={<AboutUs />} />
                 <Route path="/heatmap" element={<HeatMap2 />} />

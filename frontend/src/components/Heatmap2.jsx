@@ -123,18 +123,24 @@ const HeatMap = () => {
     // Fetch incidents from the Django backend
     const fetchIncidents = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/all_incidents/`
-        );
+        const response = await fetch(`${API_URL}/api/all_incidents/`);
         const incidents = await response.json();
         console.log("Fetched incidents:", incidents);
 
-        // Map the incidents to the format [latitude, longitude, intensity]
-        const mappedData = incidents.map((incident) => [
-          incident.location.latitude,
-          incident.location.longitude,
-          severityToIntensity(incident.severity),
-        ]);
+        const mappedData = incidents
+          .filter(
+            (incident) =>
+              incident.location &&
+              incident.location.latitude !== undefined &&
+              incident.location.longitude !== undefined
+          )
+          .map((incident) => [
+            Number(incident.location.latitude),
+            Number(incident.location.longitude),
+            severityToIntensity(incident.severity),
+          ]);
+
+        setHeatmapData(mappedData);
 
         setHeatmapData(mappedData);
       } catch (error) {
