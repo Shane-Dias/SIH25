@@ -25,11 +25,10 @@ ChartJS.register(
   Legend
 );
 
-  const API_HOST = import.meta.env.VITE_API_HOST;
-  const API_URL = import.meta.env.VITE_API_URL;
-  console.log("API Host:", API_HOST);
-  console.log("API_URL:", API_URL);
-  
+const API_HOST = import.meta.env.VITE_API_HOST;
+const API_URL = import.meta.env.VITE_API_URL;
+console.log("API Host:", API_HOST);
+console.log("API_URL:", API_URL);
 
 // Enhanced chart options with neuromorphic theme
 const chartOptions = {
@@ -70,6 +69,8 @@ const chartOptions = {
         font: {
           family: "'Inter', sans-serif",
         },
+        maxRotation: 45,
+        minRotation: 45,
       },
     },
     y: {
@@ -87,10 +88,32 @@ const chartOptions = {
   },
 };
 
+// Mobile-specific chart options
+const mobileChartOptions = {
+  ...chartOptions,
+  plugins: {
+    ...chartOptions.plugins,
+    legend: {
+      ...chartOptions.plugins.legend,
+      position: "bottom",
+    },
+  },
+};
+
 const IncidentAnalyticsDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -249,14 +272,14 @@ const IncidentAnalyticsDashboard = () => {
   if (!data) return null;
 
   return (
-    <div className="p-8 bg-[#001830] min-h-screen">
+    <div className="p-4 md:p-8 bg-slate-900 min-h-screen">
       {/* Title with enhanced glow effect */}
-      <h1 className="text-5xl font-bold text-cyan-400 mb-12 text-center drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] animate-pulse">
+      <h1 className="text-3xl md:text-5xl font-bold text-cyan-400 mb-8 md:mb-12 text-center drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] animate-pulse">
         Incident Analytics Dashboard
       </h1>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 mb-8 md:mb-12">
         {[
           {
             title: "Resolution Rate",
@@ -280,15 +303,15 @@ const IncidentAnalyticsDashboard = () => {
         ].map((stat, index) => (
           <div
             key={index}
-            className="bg-[#002345] rounded-xl p-6 shadow-[5px_5px_15px_rgba(0,0,0,0.3),-5px_-5px_15px_rgba(0,255,255,0.1)] border border-cyan-400/20 transform transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:scale-105"
+            className="bg-[#002345] rounded-xl p-4 md:p-6 shadow-[5px_5px_15px_rgba(0,0,0,0.3),-5px_-5px_15px_rgba(0,255,255,0.1)] border border-cyan-400/20 transform transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:scale-105"
           >
-            <div className="flex items-center space-x-4">
-              <span className="text-2xl">{stat.icon}</span>
+            <div className="flex items-center space-x-3 md:space-x-4">
+              <span className="text-xl md:text-2xl">{stat.icon}</span>
               <div>
-                <h3 className="text-lg font-semibold text-cyan-400 mb-2">
+                <h3 className="text-sm md:text-lg font-semibold text-cyan-400 mb-1 md:mb-2">
                   {stat.title}
                 </h3>
-                <div className="text-3xl font-bold text-white">
+                <div className="text-xl md:text-3xl font-bold text-white">
                   {stat.value}
                 </div>
               </div>
@@ -298,33 +321,53 @@ const IncidentAnalyticsDashboard = () => {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
         {[
           {
             title: "Hourly Distribution",
-            chart: <Bar options={chartOptions} data={hourlyDistributionData} />,
+            chart: (
+              <Bar
+                options={isMobile ? mobileChartOptions : chartOptions}
+                data={hourlyDistributionData}
+              />
+            ),
           },
           {
             title: "Incident Type Distribution",
-            chart: <Pie options={chartOptions} data={incidentTypeData} />,
+            chart: (
+              <Pie
+                options={isMobile ? mobileChartOptions : chartOptions}
+                data={incidentTypeData}
+              />
+            ),
           },
           {
             title: "Weekly Pattern",
-            chart: <Bar options={chartOptions} data={weeklyPatternData} />,
+            chart: (
+              <Bar
+                options={isMobile ? mobileChartOptions : chartOptions}
+                data={weeklyPatternData}
+              />
+            ),
           },
           {
             title: "Emergency Services Response",
-            chart: <Bar options={chartOptions} data={emergencyServicesData} />,
+            chart: (
+              <Bar
+                options={isMobile ? mobileChartOptions : chartOptions}
+                data={emergencyServicesData}
+              />
+            ),
           },
         ].map((section, index) => (
           <div
             key={index}
-            className="bg-[#002345] rounded-xl p-6 shadow-[5px_5px_15px_rgba(0,0,0,0.3),-5px_-5px_15px_rgba(0,255,255,0.1)] border border-cyan-400/20 transform transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+            className="bg-[#002345] rounded-xl p-4 md:p-6 shadow-[5px_5px_15px_rgba(0,0,0,0.3),-5px_-5px_15px_rgba(0,255,255,0.1)] border border-cyan-400/20 transform transition-all duration-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
           >
-            <h3 className="text-xl font-semibold text-cyan-400 mb-6 p-3 rounded-lg shadow-[inset_-2px_-2px_8px_rgba(0,0,0,0.2),_inset_2px_2px_8px_rgba(0,255,255,0.1)] border border-cyan-400/20">
+            <h3 className="text-lg md:text-xl font-semibold text-cyan-400 mb-4 md:mb-6 p-2 md:p-3 rounded-lg shadow-[inset_-2px_-2px_8px_rgba(0,0,0,0.2),_inset_2px_2px_8px_rgba(0,255,255,0.1)] border border-cyan-400/20 text-center md:text-left">
               {section.title}
             </h3>
-            <div className="h-[400px] bg-[#001830] rounded-lg p-4 shadow-[inset_-4px_-4px_8px_rgba(0,0,0,0.3),inset_4px_4px_8px_rgba(0,255,255,0.1)] border border-cyan-400/10">
+            <div className="h-[300px] md:h-[400px] bg-[#001830] rounded-lg p-2 md:p-4 shadow-[inset_-4px_-4px_8px_rgba(0,0,0,0.3),inset_4px_4px_8px_rgba(0,255,255,0.1)] border border-cyan-400/10">
               {section.chart}
             </div>
           </div>
