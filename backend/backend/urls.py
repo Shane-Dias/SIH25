@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/report-incident/', views.form_report.as_view(), name='report_incident'),
     path('api/', include('incidents.urls')),
     path('api/', include('photos.urls')),
+    path('api/chat/', include('chat.urls')),
     path('api/signup/', views.SignUpView.as_view(), name='signup'),
     path('api/login/', views.LoginView.as_view(), name='login'),
     path('api/send_email', views.send_email_example, name='send_email'),
