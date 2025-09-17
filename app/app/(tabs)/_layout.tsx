@@ -7,6 +7,14 @@ export default class _layout extends Component {
     return (
       <Tabs>
         <Tabs.Screen
+          name="index"
+          options={{
+            headerShown: false,
+            title: 'home',
+            tabBarLabel: 'Home',
+          }}
+        />
+        <Tabs.Screen
           name="map"
           options={{
             headerShown: false,
@@ -19,17 +27,10 @@ export default class _layout extends Component {
           options={{
             headerShown: false,
             title: 'Report',
-            tabBarLabel: 'Peport',
+            tabBarLabel: 'Report',
           }}
         />
-        <Tabs.Screen
-          name="index"
-          options={{
-            headerShown: false,
-            title: 'home',
-            tabBarLabel: 'Home',
-          }}
-        />
+        
         <Tabs.Screen
           name="profile"
           options={{

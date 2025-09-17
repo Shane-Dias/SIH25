@@ -140,6 +140,8 @@ class LoginView(APIView):
                     "refresh": str(refresh)
                 }
             }, status=status.HTTP_200_OK)
+        
+
 
         except Exception as e:
             return Response({
@@ -197,14 +199,16 @@ class form_report(APIView):
             user = self.authenticate_user(request)
             data = request.data.copy()
             data['severity'] = self.chain.invoke({"user_input": data.get("description", "")}).strip()
-            print("data recieved",data)
-            # Validate location data
-            location = dict(self.validate_location(data.get("location")))
-            if not location:
+            print("data received", data)
+            
+            # Validate location data and get coordinates for processing
+            location_dict = self.validate_location(data.get("location"))
+            if not location_dict:
                 return Response({"error": "Invalid location data"}, status=status.HTTP_400_BAD_REQUEST)
             
-            lat, lon = location["latitude"], location["longitude"]
-            print("location gotten")
+            lat, lon = location_dict["latitude"], location_dict["longitude"]
+            print("location gotten", lat, lon)
+            
             # Check for similar existing incidents
             existing_incident = self.find_similar_incident(data, lat, lon)
             if existing_incident:
@@ -216,11 +220,11 @@ class form_report(APIView):
                     "incident_id": existing_incident.id,
                     "severity": data['severity']
                 }, status=status.HTTP_201_CREATED)
-            match = re.search(r'\{.*\}', data['location'], re.DOTALL)
-            if match:
-                json_string = match.group()
-                data['location'] = json.loads(json_string)
-            print(data)
+            
+            # Keep location as JSON string for serializer
+            # Don't modify data['location'] here - let serializer handle it
+            
+            print("Final data for serializer:", data)
             serializer = IncidentSerializer(data=data)
             if serializer.is_valid():
                 print("serializer is valid")
@@ -232,9 +236,12 @@ class form_report(APIView):
                     "severity": data['severity']
                 }, status=status.HTTP_201_CREATED)
             
+            print("serializer errors:", serializer.errors)
+            
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
+            print(f"Unexpected error: {str(e)}")
             return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def authenticate_user(self, request):
@@ -263,7 +270,7 @@ class form_report(APIView):
         )[0]
 
     def validate_location(self, location):
-        """Ensures location is valid"""
+        """Ensures location is valid and returns parsed dict"""
         if isinstance(location, str):
             try:
                 location = json.loads(location)
@@ -273,17 +280,30 @@ class form_report(APIView):
         if not isinstance(location, dict) or "latitude" not in location or "longitude" not in location:
             return None
 
-        lat, lon = location["latitude"], location["longitude"]
-        if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+        try:
+            lat = float(location["latitude"])
+            lon = float(location["longitude"])
+            
+            # Validate coordinate ranges
+            if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+                return None
+                
+            return {"latitude": lat, "longitude": lon}
+        except (ValueError, TypeError):
             return None
-        
-        return location
 
     def find_similar_incident(self, data, lat, lon):
         """Check for existing similar incidents within 50 meters & 1 hour"""
         recent_incidents = Incidents.objects.filter(incidentType=data.get("incidentType"))
         for incident in recent_incidents:
-            if great_circle((lat, lon), (incident.location["latitude"], incident.location["longitude"])).meters <= 50:
+            incident_location = incident.location
+            if isinstance(incident_location, str):
+                try:
+                    incident_location = json.loads(incident_location)
+                except json.JSONDecodeError:
+                    continue
+                    
+            if great_circle((lat, lon), (incident_location["latitude"], incident_location["longitude"])).meters <= 50:
                 print("Under 50 metres")
                 if abs(data.get("reported_at", timezone.now()) - incident.reported_at) <= timedelta(hours=1):
                     print("Under 1 hour")
@@ -298,7 +318,7 @@ class form_report(APIView):
             ("human", "{newdata} \n {previousdata}")
         ])
         chain = prompt | model | StrOutputParser()
-        return chain.invoke({"newdata": new_description, "previousdata": previous_description}) == "True"
+        return chain.invoke({"newdata": new_description, "previousdata": previous_description}).strip() == "True"
 
     def notify_existing_incident(self, incident):
         """Send notification if an incident is reported again"""
@@ -354,10 +374,18 @@ class form_report(APIView):
     def notify_new_incident(self, station, incident):
         """Send email notification to the assigned station"""
         try:
+            # Parse location if it's a string
+            location_data = incident.location
+            if isinstance(location_data, str):
+                try:
+                    location_data = json.loads(location_data)
+                except json.JSONDecodeError:
+                    location_data = {"latitude": "Unknown", "longitude": "Unknown"}
+            
             message = (
                 f"New {incident.incidentType} reported!\n"
                 f"Severity: {incident.severity}\n"
-                f"Location: ({incident.location['latitude']}, {incident.location['longitude']})\n"
+                f"Location: ({location_data.get('latitude', 'Unknown')}, {location_data.get('longitude', 'Unknown')})\n"
                 f"Description: {incident.description}\n"
                 f"Reported by: {incident.reported_by.first_name} {incident.reported_by.last_name}"
             )
@@ -366,7 +394,7 @@ class form_report(APIView):
             send_email_example(f"New {incident.severity.capitalize()} Priority Incident Alert", message, station.email)
         except Exception as e:
             print(f"Notification error for station {station.id}: {str(e)}")
-
+            
 class voicereport(APIView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -72,7 +72,7 @@ SIMPLE_JWT = {
 }
 
 
-
+# Add Expo and local IPs for React Native
 CORS_ALLOW_ALL_ORIGINS = True
 
 
