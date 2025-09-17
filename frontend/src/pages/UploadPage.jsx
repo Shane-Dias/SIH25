@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Camera, FileText, Image, CheckCircle, AlertCircle, Eye, CameraIcon } from 'lucide-react';
+import { Upload, Camera, FileText, Image, CheckCircle, AlertCircle, Eye, CameraIcon, MapPin, Navigation } from 'lucide-react';
 
 const UploadPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -10,6 +10,8 @@ const UploadPage = () => {
   const [messageType, setMessageType] = useState(''); // 'success' or 'error'
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const API_HOST = import.meta.env.VITE_API_HOST;
@@ -21,6 +23,55 @@ const UploadPage = () => {
     setMessageType('');
   };
 
+  const getLocation = () => {
+    setGettingLocation(true);
+    setMessage('');
+    setMessageType('');
+
+    if (!navigator.geolocation) {
+      setMessage('Geolocation is not supported by this browser.');
+      setMessageType('error');
+      setGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        setLocation(coords);
+        setGettingLocation(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        let errorMessage = 'Unable to retrieve location.';
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied. Please enable location permissions.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out.';
+            break;
+        }
+        
+        setMessage(errorMessage);
+        setMessageType('error');
+        setGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
+
   const handleUpload = async (event) => {
     event.preventDefault();
     
@@ -30,10 +81,18 @@ const UploadPage = () => {
       return;
     }
 
+    if (!location) {
+      setMessage('Please get your location first - this is required');
+      setMessageType('error');
+      return;
+    }
+
     setUploading(true);
     const formData = new FormData();
     formData.append('image', selectedFile);
     formData.append('title', title);
+    formData.append('latitude', location.latitude.toString());
+    formData.append('longitude', location.longitude.toString());
 
     try {
       const response = await fetch(`${API_URL}/api/photos/`, {
@@ -46,6 +105,7 @@ const UploadPage = () => {
         setMessageType('success');
         setSelectedFile(null);
         setTitle('');
+        setLocation(null);
         document.getElementById('fileInput').value = '';
         
         // Redirect to photos page after a brief delay to show success message
@@ -272,6 +332,75 @@ const UploadPage = () => {
                 </>
               )}
 
+              {/* Geolocation Section */}
+              {!showCamera && (
+                <div className="relative">
+                  <label className="text-gray-300 text-sm font-medium mb-2 block">
+                    <MapPin className="w-4 h-4 inline-block mr-2 text-cyan-400" />
+                    Location <span className="text-red-400">*</span>
+                  </label>
+                  <div className="space-y-3">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={getLocation}
+                      disabled={gettingLocation}
+                      className={`w-full py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                        gettingLocation
+                          ? 'bg-slate-700 text-gray-400 cursor-not-allowed'
+                          : location
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white hover:shadow-orange-500/20'
+                      }`}
+                    >
+                      {gettingLocation ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full"
+                          />
+                          Getting Location...
+                        </>
+                      ) : location ? (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Location Retrieved
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="w-4 h-4" />
+                          Get My Location
+                        </>
+                      )}
+                    </motion.button>
+
+                    {location && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-slate-800 rounded-xl p-4"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                          <div className="bg-slate-700 rounded-lg p-3">
+                            <span className="text-gray-400">Latitude:</span>
+                            <span className="text-white ml-2 font-mono">
+                              {location.latitude.toFixed(6)}
+                            </span>
+                          </div>
+                          <div className="bg-slate-700 rounded-lg p-3">
+                            <span className="text-gray-400">Longitude:</span>
+                            <span className="text-white ml-2 font-mono">
+                              {location.longitude.toFixed(6)}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Submit Button */}
               {!showCamera && (
                 <motion.button
@@ -402,6 +531,10 @@ const UploadPage = () => {
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 mt-1">•</span>
                   Camera feature works best in well-lit environments
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 mt-1">•</span>
+                  Location data is required for geo-tagging your photos
                 </li>
               </ul>
             </div>
