@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "topic": "Public Incidents",
+    "content": "Public incidents refer to events or situations that affect the general public, such as accidents, natural disasters, or civic issues. Reporting these incidents helps authorities respond quickly and efficiently."
+  },
+  {
+    "id": 2,
+    "topic": "Reporting Guide",
+    "content": "To report a public incident: 1. Gather accurate information (location, time, description). 2. Take photos or videos if safe. 3. Use the official reporting platform or app. 4. Provide your contact details if follow-up is needed. 5. Submit the report and note the reference number."
+  },
+  {
+    "id": 3,
+    "topic": "Crowd Reports",
+    "content": "Crowd reports are incident reports submitted by multiple individuals. They help verify the authenticity and urgency of an issue. Encourage others to report if they witness the same incident."
+  },
+  {
+    "id": 4,
+    "topic": "Authorities Reach Out",
+    "content": "After a report is submitted, authorities may reach out for more information or to provide updates. Always respond promptly and provide any additional details requested."
+  },
+  {
+    "id": 5,
+    "topic": "Garbage Problem",
+    "content": "Garbage accumulation can lead to health hazards and environmental issues. Report overflowing bins, illegal dumping, or missed collections to the municipal corporation with location details and photos."
+  },
+  {
+    "id": 6,
+    "topic": "Pothole Issues",
+    "content": "Potholes can cause accidents and damage vehicles. Report potholes by specifying the exact location, size, and severity. Attach photos for better assessment by authorities."
+  }
+]

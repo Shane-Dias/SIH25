@@ -40,6 +40,32 @@ from django.db.models.functions import (
     ExtractWeekDay, TruncMonth, 
     ExtractHour, ExtractYear
 )
+import os
+
+# --- RAG Knowledge Base API ---
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+@api_view(["POST"])
+def rag_knowledge_query(request):
+    """
+    Retrieve relevant knowledge base entries for a given query (simple keyword match).
+    POST body: { "query": "..." }
+    """
+    query = request.data.get("query", "").lower()
+    kb_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base", "civic_issues_knowledge.json")
+    try:
+        with open(kb_path, "r", encoding="utf-8") as f:
+            kb = json.load(f)
+    except Exception as e:
+        return Response({"error": f"Knowledge base not found: {e}"}, status=500)
+    if not query:
+        return Response({"error": "No query provided."}, status=400)
+    # Simple keyword search (can be replaced with semantic search)
+    results = [entry for entry in kb if query in entry["topic"].lower() or query in entry["content"].lower()]
+    # If nothing found, return all topics for discoverability
+    if not results:
+        results = kb
+    return Response({"results": results})
 from django.db.models import (
     Avg, Case, Count, F, FloatField, IntegerField, Q, Value, When, ExpressionWrapper, DurationField
 )
@@ -833,14 +859,44 @@ class ChatbotView_Therapist(APIView):
         chat_history = request.data.get("chat_history")
         location = request.data.get("location")
 
-        if not isinstance(chat_history, list):  # Ensure chat_history is a list
+        if not isinstance(chat_history, list):
             chat_history = []
 
         if not user_input:
             return Response({"error": "user_input is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        chain_input = {"user_input": user_input, "chat_history": chat_history, "location": location}
-        response = self.chain.invoke(chain_input)
+        # --- RAG: Check if user_input matches knowledge base ---
+        import os
+        kb_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base", "civic_issues_knowledge.json")
+        try:
+            with open(kb_path, "r", encoding="utf-8") as f:
+                kb = json.load(f)
+        except Exception as e:
+            return Response({"error": f"Knowledge base not found: {e}"}, status=500)
+
+        user_input_lower = user_input.lower()
+        matches = [entry for entry in kb if user_input_lower in entry["topic"].lower() or user_input_lower in entry["content"].lower()]
+
+        if not matches:
+            # Try keyword match for any civic issue topic
+            civic_keywords = ["incident", "report", "crowd", "authority", "garbage", "pothole", "civic", "municipal", "public"]
+            if not any(kw in user_input_lower for kw in civic_keywords):
+                response = "I'm here to help you with civic issues only (public incidents, reporting, garbage, potholes, etc). Please ask a question related to civic issues."
+                chat_history.append(f"User: {user_input}")
+                chat_history.append(f"Bot: {response}")
+                return Response({
+                    "user_input": user_input,
+                    "bot_response": response,
+                    "chat_history": chat_history,
+                }, status=status.HTTP_200_OK)
+
+        # If related, answer using the knowledge base (return all matches or a summary)
+        if matches:
+            response = "Here is what I found related to your query:\n"
+            for entry in matches:
+                response += f"- {entry['topic']}: {entry['content']}\n"
+        else:
+            response = "I can help with civic issues. Please clarify your question."
 
         chat_history.append(f"User: {user_input}")
         chat_history.append(f"Bot: {response}")
