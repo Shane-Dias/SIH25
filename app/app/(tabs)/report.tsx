@@ -3,9 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView 
 import * as Location from 'expo-location';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 // Centralized API base URL from .env
-const API_BASE_URL = process.env.API_BASE_URL || 'http://192.168.11.13:8000';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://192.168.1.37:8000';
 
 type IncidentType =
   | 'Domestic Violence' | 'Child Abuse' | 'Sexual Harassment' | 'Stalking' | 'Human Trafficking'
@@ -42,6 +44,35 @@ const INCIDENT_TYPES: IncidentType[] = [
 ];
 
 export default function ReportScreen() {
+  // Camera capture handler
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Camera permission is required to take a photo.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        allowsEditing: false,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const photo = result.assets[0];
+        setForm({
+          ...form,
+          file: {
+            uri: photo.uri,
+            name: photo.fileName || 'photo.jpg',
+            mimeType: photo.type || 'image/jpeg',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
   const [form, setForm] = useState<FormType>({
     incidentType: '',
     location: { latitude: '', longitude: '' },
@@ -154,26 +185,35 @@ export default function ReportScreen() {
     
     setLoading(true);
     setErrors({});
-    
     try {
-      const data = new FormData();
-      
-      // Add form data with proper types
-      data.append('incidentType', form.incidentType);
-      
-      // Format location as JSON string with proper number types
+      // Get user token from AsyncStorage
+      const token = await AsyncStorage.getItem('accessToken');
+
+      // Prepare incident data in backend format
       const locationData = {
         latitude: parseFloat(form.location.latitude),
         longitude: parseFloat(form.location.longitude),
       };
-      data.append('location', JSON.stringify(locationData));
-      
-      data.append('description', form.description.trim());
-      
-      // Add current timestamp
-      data.append('reported_at', new Date().toISOString());
-      
-      // Only append file if present and valid
+
+      const incidentData = {
+        incidentType: form.incidentType,
+        location: JSON.stringify(locationData), // backend expects JSON string
+        description: form.description.trim(),
+        reported_at: Date.now(), // send as timestamp (ms since epoch)
+      };
+
+      // Use FormData for file upload
+      const data = new FormData();
+      Object.entries(incidentData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          // Convert reported_at to string for FormData
+          if (key === 'reported_at') {
+            data.append(key, String(value));
+          } else {
+            data.append(key, value as string);
+          }
+        }
+      });
       if (form.file && form.file.uri && form.file.name && form.file.mimeType) {
         data.append('file', {
           uri: form.file.uri,
@@ -181,70 +221,59 @@ export default function ReportScreen() {
           type: form.file.mimeType,
         } as any);
       }
-      
+
       console.log('Submitting data:', {
-        incidentType: form.incidentType,
-        location: locationData,
-        description: form.description.trim(),
+        ...incidentData,
         hasFile: !!form.file,
+        token,
       });
-      
-  const response = await axios.post(`${API_BASE_URL}/api/report-incident/`, data, {
+
+      const response = await axios.post(`${API_BASE_URL}/api/report-incident/`, data, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          // Add authorization header if you have a token
-          // 'Authorization': `Bearer ${yourToken}`,
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         timeout: 30000,
       });
-      
+
       console.log('Response:', response.data);
-      
       Alert.alert(
-        'Success', 
+        'Success',
         response.data.message || 'Incident reported successfully!',
         [{
           text: 'OK',
           onPress: () => {
-            // Reset form after successful submission
-            setForm({ 
-              incidentType: '', 
-              location: { latitude: '', longitude: '' }, 
-              description: '', 
-              file: null 
+            setForm({
+              incidentType: '',
+              location: { latitude: '', longitude: '' },
+              description: '',
+              file: null
             });
             setErrors({});
           }
         }]
       );
-      
     } catch (err: any) {
       console.error('Submit error:', err);
-      
       let errorMessage = 'Failed to report incident. Please try again.';
       let fieldErrors: ErrorType = {};
       
       if (err.response) {
         console.log('Error response:', err.response.data);
-        
         if (err.response.data) {
-          // Handle validation errors from Django serializer
           if (typeof err.response.data === 'object' && !err.response.data.error && !err.response.data.message) {
-            // Field-specific validation errors
             Object.keys(err.response.data).forEach(key => {
               if (key in fieldErrors || key === 'incidentType' || key === 'location' || key === 'description') {
-                fieldErrors[key as keyof ErrorType] = Array.isArray(err.response.data[key]) 
-                  ? err.response.data[key][0] 
+                fieldErrors[key as keyof ErrorType] = Array.isArray(err.response.data[key])
+                  ? err.response.data[key][0]
                   : err.response.data[key];
               }
             });
-            
             if (Object.keys(fieldErrors).length > 0) {
               setErrors(fieldErrors);
               errorMessage = 'Please fix the errors above and try again.';
             }
           } else {
-            // General error message
             errorMessage = err.response.data?.error || err.response.data?.message || errorMessage;
           }
         }
@@ -335,6 +364,9 @@ export default function ReportScreen() {
           {form.file ? 'Change File' : 'Attach File (optional)'}
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.cameraButton} onPress={handleTakePhoto}>
+        <Text style={styles.buttonText}>Take Photo</Text>
+      </TouchableOpacity>
       
       {form.file && (
         <View style={styles.fileInfo}>
@@ -361,6 +393,16 @@ export default function ReportScreen() {
 }
 
 const styles = StyleSheet.create({
+  cameraButton: {
+    backgroundColor: '#0bf',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 8,
+    marginTop: 0,
+    borderWidth: 1,
+    borderColor: '#444',
+  },
   container: {
     flexGrow: 1,
     backgroundColor: '#181c24',

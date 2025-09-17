@@ -22,11 +22,19 @@ export default function LoginScreen({ navigation, goToSignup }) {
     setLoading(true);
     try {
       const data = await login(email, password);
-      // Save token and user info for authenticated requests
-      await AsyncStorage.setItem('accessToken', data.tokens.access);
-      await AsyncStorage.setItem('userEmail', data.email);
-      await AsyncStorage.setItem('userId', data.user_id.toString());
-      Alert.alert('Login Successful', `Welcome ${data.email}`);
+      // Save all user data and token
+      await AsyncStorage.setItem('accessToken', data.tokens?.access || data.token || '');
+      await AsyncStorage.setItem('user', JSON.stringify(data.user || {
+        email: data.email,
+        user_id: data.user_id,
+        ...data
+      }));
+      // Console log the saved data for verification
+      const savedToken = await AsyncStorage.getItem('accessToken');
+      const savedUser = await AsyncStorage.getItem('user');
+      console.log('Saved accessToken:', savedToken);
+      console.log('Saved user:', savedUser);
+      Alert.alert('Login Successful', `Welcome ${data.email || (data.user && data.user.email)}`);
       navigation.replace('(tabs)');
     } catch (err) {
       setErrors({ general: err?.response?.data?.error || 'Invalid credentials' });
