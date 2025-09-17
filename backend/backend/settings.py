@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-fsvutlw7@ro!@_n5-f(=jvc7k(t%w854etqqm7k)t9lzb-t)q6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -70,10 +70,8 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-]
 
+# Add Expo and local IPs for React Native
 CORS_ALLOW_ALL_ORIGINS = True
 
 
