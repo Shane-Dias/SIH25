@@ -9,8 +9,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    host: true, // Binds to all interfaces
-    allowedHosts: [".ngrok-free.app"], // Allow Ngrok subdomains
+  build: {
+    outDir: 'dist',
   },
 });
