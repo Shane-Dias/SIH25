@@ -42,6 +42,9 @@ from django.db.models.functions import (
 )
 import os
 
+# Admin email for notifications
+ADMIN_EMAIL = 'jacelljamble@gmail.com'
+
 # --- RAG Knowledge Base API ---
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -256,6 +259,10 @@ class form_report(APIView):
                 print("serializer is valid")
                 incident = serializer.save(reported_by=user)
                 self.assign_nearest_stations(incident, lat, lon)
+                
+                # Notify admin about new incident
+                self.notify_admin_new_incident(incident)
+                
                 return Response({
                     "message": "Incident reported successfully!",
                     "incident_id": incident.id,
@@ -368,6 +375,46 @@ class form_report(APIView):
             subject = "Incident has been reported by another user"
             message = f"Another user has reported the same incident (ID: {incident.id}). Please investigate."
             send_email_example(subject, message, station.email)
+
+    def notify_admin_new_incident(self, incident):
+        """Send email notification to admin when new incident is reported"""
+        try:
+            # Parse location if it's a string
+            location_data = incident.location
+            if isinstance(location_data, str):
+                try:
+                    location_data = json.loads(location_data)
+                except json.JSONDecodeError:
+                    location_data = {"latitude": "Unknown", "longitude": "Unknown"}
+            
+            subject = f"[INCIDENT ALERT] New {incident.severity.upper()} Priority Report - ID: {incident.id}"
+            message = f"""
+New incident report has been submitted:
+
+Incident ID: {incident.id}
+Type: {incident.incidentType}
+Severity: {incident.severity.upper()}
+Status: {incident.status}
+Location: ({location_data.get('latitude', 'Unknown')}, {location_data.get('longitude', 'Unknown')})
+Description: {incident.description}
+Reported by: {incident.reported_by.first_name} {incident.reported_by.last_name}
+Reporter Email: {incident.reported_by.email}
+Reported at: {incident.reported_at}
+
+Assigned Stations:
+- Police Station: {incident.police_station.name if incident.police_station else 'N/A'}
+- Fire Station: {incident.fire_station.name if incident.fire_station else 'N/A'}
+- Hospital: {incident.hospital_station.name if incident.hospital_station else 'N/A'}
+- Municipal Corporation: {incident.municipal_corporation.name if incident.municipal_corporation else 'N/A'}
+
+Please review this incident in the admin panel.
+            """
+            
+            send_email_example(subject, message, ADMIN_EMAIL)
+            print(f"Admin notification sent to {ADMIN_EMAIL} for incident {incident.id}")
+            
+        except Exception as e:
+            print(f"Admin notification error for incident {incident.id}: {str(e)}")
 
     def assign_nearest_stations(self, incident, lat, lon):
         """Assigns nearest police, fire, and hospital stations to the incident"""
@@ -588,7 +635,51 @@ class voicereport(APIView):
         incident_obj.municipal_corporation = nearest_stations['municipal_corporation']
         incident_obj.save()
 
+        # Notify admin about new voice report incident
+        self.notify_admin_new_incident(incident_obj)
+
         return Response({"message": "Incident reported successfully!", "incident_id": incident_obj.id}, status=status.HTTP_201_CREATED)
+
+    def notify_admin_new_incident(self, incident):
+        """Send email notification to admin when new voice report incident is created"""
+        try:
+            # Parse location if it's a string
+            location_data = incident.location
+            if isinstance(location_data, str):
+                try:
+                    location_data = json.loads(location_data)
+                except json.JSONDecodeError:
+                    location_data = {"latitude": "Unknown", "longitude": "Unknown"}
+            
+            subject = f"[VOICE REPORT ALERT] New {incident.severity.upper()} Priority Report - ID: {incident.id}"
+            message = f"""
+New voice report incident has been submitted:
+
+Incident ID: {incident.id}
+Type: {incident.incidentType}
+Severity: {incident.severity.upper()}
+Status: {incident.status}
+Location: ({location_data.get('latitude', 'Unknown')}, {location_data.get('longitude', 'Unknown')})
+Description: {incident.description}
+Reported by: {incident.reported_by.first_name} {incident.reported_by.last_name}
+Reporter Email: {incident.reported_by.email}
+Reported at: {incident.reported_at}
+Report Type: Voice Report
+
+Assigned Stations:
+- Police Station: {incident.police_station.name if incident.police_station else 'N/A'}
+- Fire Station: {incident.fire_station.name if incident.fire_station else 'N/A'}
+- Hospital: {incident.hospital_station.name if incident.hospital_station else 'N/A'}
+- Municipal Corporation: {incident.municipal_corporation.name if incident.municipal_corporation else 'N/A'}
+
+Please review this voice report incident in the admin panel.
+            """
+            
+            send_email_example(subject, message, ADMIN_EMAIL)
+            print(f"Admin notification sent to {ADMIN_EMAIL} for voice report incident {incident.id}")
+            
+        except Exception as e:
+            print(f"Admin notification error for voice report incident {incident.id}: {str(e)}")
 
 
 @api_view(['PATCH'])
@@ -872,7 +963,7 @@ class ChatbotView_Therapist(APIView):
              You are an AI assistant specializing in both therapy and legal guidance in India.
             As a therapist, provide empathetic emotional support, comfort, and guidance, especially for users dealing with trauma.
             As a legal guidance officer, offer clear, concise advice based on Indian law, ensuring accuracy and relevance.
-            Balance both roles carefully—your responses should be brief yet compassionate, legally sound, and practical. If appropriate, use the user’s location to recommend nearby government agencies or legal resources for further assistance.
+            Balance both roles carefully—your responses should be brief yet compassionate, legally sound, and practical. If appropriate, use the user's location to recommend nearby government agencies or legal resources for further assistance.
              """),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{user_input}"),

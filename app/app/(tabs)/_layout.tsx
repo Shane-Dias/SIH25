@@ -30,13 +30,27 @@ export default class _layout extends Component {
             tabBarLabel: 'Report',
           }}
         />
-        
+        <Tabs.Screen
+          name="recentincident1"
+          options={{
+            headerShown: false,
+            title: 'Recent',
+            tabBarLabel: 'Recent',
+          }}
+        />
         <Tabs.Screen
           name="profile"
           options={{
             headerShown: false,
             title: 'Profile',
             tabBarLabel: 'Profile',
+          }}
+        />
+        <Tabs.Screen
+          name="incident-detail"
+          options={{
+            headerShown: false,
+            tabBarButton: () => null, // Remove tab button entirely
           }}
         />
       </Tabs>
